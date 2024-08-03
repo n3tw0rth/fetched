@@ -4,5 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+axum = "0.7.5"
+parking_lot = "0.12.3"
+serde = "1.0.204"
 tokio = "1.39.2"
 tracing = "0.1.40"
+warp = "0.3.7"

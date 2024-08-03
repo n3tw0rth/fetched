@@ -1,5 +1,7 @@
-use pipeline::utils;
+use pipeline::api::server;
+use pipeline::utils::logging;
 
 fn main() {
-    utils::logging::logger();
+    logging::logger();
+    server::start_server();
 }
