@@ -1,18 +1,20 @@
 version: 1
 env:
-  - name: "ORG_NAME"
-    value: "Acme"
+  - name: "ENV_1"
+    value: "value_1"
+  - name: "ENV_2"
+    value: "value_2"
 trigger: "dev"  # branch name
 stages:
-  stage:
-    name: "Build"
-    timeout: 20m
-    steps:
-      - sh: "echo foo" # normal shell commands like in jenkins
-      - py: "foo/script.py" # conditional logics support with python
-    plugins:
-      name: "bitbucket-status-update"
-      when: "start|error|success|timeout|any"
-  stage: 
-    name: "Deploy"
+  - stage:
+      name: "Build"
+      timeout: 20 # in seconds
+      steps:
+        - sh "echo foo" # normal shell commands like in jenkins
+        - py "foo/script.py" # conditional logics support with python
+      plugins:
+        - name: "bitbucket-status-update"
+          when: "start|error|success|timeout|any"
+  - stage: 
+      name: "Deploy"
 
