@@ -1,4 +1,3 @@
-pub fn logger() {
+pub async fn logger() {
     println!("A custom pipeline to build images")
 }
-

@@ -1,7 +1,8 @@
 use pipeline::api::server;
 use pipeline::utils::logging;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     logging::logger();
-    server::start_server();
+    server::start_server().await;
 }

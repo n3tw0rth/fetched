@@ -1,9 +1,9 @@
 use crate::core::runner;
 
-pub fn start_server() {
+pub async fn start_server() {
     println!("Starts the web server");
-    register_routes();
-    runner::async_runner();
+    register_routes().await;
+    let _ = runner::async_runner().await;
 }
 
-pub fn register_routes() {}
+pub async fn register_routes() {}

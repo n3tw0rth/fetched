@@ -9,6 +9,6 @@ parking_lot = "0.12.3"
 serde = "1.0.204"
 serde_derive = "1.0.205"
 serde_yaml = "0.9.34"
-tokio = "1.39.2"
+tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1.40"
 warp = "0.3.7"

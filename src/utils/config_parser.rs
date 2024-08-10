@@ -33,9 +33,9 @@ pub struct ConfigFileStagePlugins {
     pub when: String,
 }
 
-pub fn parse(config_path: &str) -> Result<ConfigFile, Box<dyn std::error::Error>> {
+pub async fn parse(config_path: &str) -> Result<ConfigFile, Box<dyn std::error::Error>> {
     println!("Parsing the string");
-    let config_file = std::fs::read_to_string(config_path)?;
+    let config_file = tokio::fs::read_to_string(config_path).await?;
 
     let config: ConfigFile = serde_yaml::from_str(&config_file)?;
     Ok(config)
