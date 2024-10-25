@@ -1,0 +1,9 @@
+[package]
+name = "postman-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+color-eyre = "0.6.3"
+crossterm = "0.28.1"
+ratatui = { version = "0.29.0", features = ["all-widgets"] }
