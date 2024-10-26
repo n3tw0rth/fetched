@@ -9,6 +9,7 @@ use ratatui::{
 };
 
 use crate::core::enums::{InputMode, InputStrategy};
+use crate::core::handler::edit_event_handler;
 use crate::io::file_create::create_file;
 
 //App holds the state of the application
@@ -95,9 +96,11 @@ impl App {
     }
 
     fn submit_message(&mut self) {
+        edit_event_handler(self.input_strategy.clone(), self.input.clone());
         self.messages.push(self.input.clone());
         self.input.clear();
         self.reset_cursor();
+        self.input_mode = InputMode::Normal;
     }
 
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
@@ -188,6 +191,5 @@ impl App {
             .collect();
         let messages = List::new(messages).block(Block::bordered().title("Messages"));
         frame.render_widget(messages, *vertical_layout.get(1).unwrap());
-        create_file("filename.ft".to_string())
     }
 }

@@ -1,5 +1,6 @@
 use color_eyre::Result;
 
+mod constants;
 mod core;
 mod io;
 
