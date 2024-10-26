@@ -1,6 +1,7 @@
 ## TODO List
 
-[ ] - ratatui
-[ ] - file creation
-[ ] - toggle input fild like in k9s
+[x] - ratatui initial config
+[x] - file creation
+[x] - toggle input fild like in k9s
+[ ] - url bar with http method like in postman
 [ ] - LSP

@@ -1,8 +1,8 @@
 use color_eyre::Result;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    layout::{Constraint, Layout, Position, Rect},
-    style::{Color, Style},
+    layout::{Alignment, Constraint, Layout, Position, Rect},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, List, ListItem, Paragraph},
     DefaultTerminal, Frame,
@@ -142,11 +142,19 @@ impl App {
     }
 
     fn draw(&self, frame: &mut Frame) {
-        let mut vertical_layout: [Rect; 2] =
-            Layout::vertical([Constraint::Length(0), Constraint::Min(1)]).areas(frame.area());
+        let mut vertical_layout: [Rect; 3] = Layout::vertical([
+            Constraint::Length(0),
+            Constraint::Length(3),
+            Constraint::Min(1),
+        ])
+        .areas(frame.area());
         if self.input_mode == InputMode::Editing {
-            vertical_layout =
-                Layout::vertical([Constraint::Length(3), Constraint::Min(1)]).areas(frame.area());
+            vertical_layout = Layout::vertical([
+                Constraint::Length(3),
+                Constraint::Length(3),
+                Constraint::Min(1),
+            ])
+            .areas(frame.area());
         }
         let input = Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
@@ -167,7 +175,6 @@ impl App {
         match self.input_mode {
             // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
             InputMode::Normal => {}
-
             // Make the cursor visible and ask ratatui to put it at the specified coordinates after
             // rendering
             #[allow(clippy::cast_possible_truncation)]
@@ -180,6 +187,21 @@ impl App {
             )),
         }
 
+        // url widget
+        let horizontal_layout: [Rect; 2] =
+            Layout::horizontal([Constraint::Length(8), Constraint::Min(1)])
+                .areas(*vertical_layout.get(1).unwrap());
+        // http method widget
+        let http_method_widget = Paragraph::new("POST")
+            .style(Style::default().add_modifier(Modifier::BOLD))
+            .alignment(Alignment::Center)
+            .block(Block::bordered().style(Color::Yellow));
+        frame.render_widget(http_method_widget, *horizontal_layout.get(0).unwrap());
+        // url
+        let url_widget = Paragraph::new("https://somewhere.com/api/v1/users")
+            .block(Block::bordered().style(Color::White));
+        frame.render_widget(url_widget, *horizontal_layout.get(1).unwrap());
+
         let messages: Vec<ListItem> = self
             .messages
             .iter()
@@ -189,7 +211,11 @@ impl App {
                 ListItem::new(content)
             })
             .collect();
-        let messages = List::new(messages).block(Block::bordered().title("Messages"));
-        frame.render_widget(messages, *vertical_layout.get(1).unwrap());
+        let messages = List::new(messages).block(
+            Block::bordered()
+                .title("Messages")
+                .title_alignment(ratatui::layout::Alignment::Center),
+        );
+        frame.render_widget(messages, *vertical_layout.get(2).unwrap());
     }
 }
