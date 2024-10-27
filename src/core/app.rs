@@ -3,14 +3,13 @@ use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, List, ListItem, Paragraph},
+    widgets::{Block, List, Paragraph},
     DefaultTerminal, Frame,
 };
 
-use crate::core::enums::{InputMode, InputStrategy};
-use crate::core::handler::edit_event_handler;
-use crate::io::file_create::create_file;
+use crate::core::enums::{FocusedWindow, InputMode, InputStrategy};
+use crate::core::handler;
+use crate::core::helpers;
 
 //App holds the state of the application
 pub struct App {
@@ -24,6 +23,8 @@ pub struct App {
     input_strategy: InputStrategy,
     // History of recorded messages
     messages: Vec<String>,
+    // Focused window
+    focused_window: FocusedWindow,
 }
 
 impl App {
@@ -34,6 +35,7 @@ impl App {
             input_strategy: InputStrategy::Command,
             messages: Vec::new(),
             character_index: 0,
+            focused_window: FocusedWindow::Input,
         }
     }
 
@@ -96,7 +98,7 @@ impl App {
     }
 
     fn submit_message(&mut self) {
-        edit_event_handler(self.input_strategy.clone(), self.input.clone());
+        handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
         self.messages.push(self.input.clone());
         self.input.clear();
         self.reset_cursor();
@@ -110,9 +112,6 @@ impl App {
             if let Event::Key(key) = event::read()? {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
-                        //KeyCode::Char('e') => {
-                        //    self.input_mode = InputMode::Editing;
-                        //}
                         KeyCode::Char('q') => {
                             return Ok(());
                         }
@@ -124,6 +123,8 @@ impl App {
                             self.input_strategy = InputStrategy::Search;
                             self.input_mode = InputMode::Editing;
                         }
+                        KeyCode::Char('1') => self.focused_window = FocusedWindow::Collections,
+
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
@@ -202,20 +203,12 @@ impl App {
             .block(Block::bordered().style(Color::White));
         frame.render_widget(url_widget, *horizontal_layout.get(1).unwrap());
 
-        let messages: Vec<ListItem> = self
-            .messages
-            .iter()
-            .enumerate()
-            .map(|(i, m)| {
-                let content = Line::from(Span::raw(format!("{i}: {m}")));
-                ListItem::new(content)
-            })
-            .collect();
-        let messages = List::new(messages).block(
-            Block::bordered()
-                .title("Messages")
+        let collections_widget = List::new(handler::list_collections()).block(
+            helpers::define_window_border_style(self.focused_window == FocusedWindow::Collections)
+                .unwrap()
+                .title("[1] Collections")
                 .title_alignment(ratatui::layout::Alignment::Center),
         );
-        frame.render_widget(messages, *vertical_layout.get(2).unwrap());
+        frame.render_widget(collections_widget, *vertical_layout.get(2).unwrap());
     }
 }

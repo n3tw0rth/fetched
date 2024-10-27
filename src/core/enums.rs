@@ -9,3 +9,9 @@ pub enum InputStrategy {
     Search,  // accessed using /
     Command, // accessed using :
 }
+
+#[derive(PartialEq)]
+pub enum FocusedWindow {
+    Collections,
+    Input,
+}
