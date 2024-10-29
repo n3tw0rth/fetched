@@ -15,3 +15,10 @@ pub enum FocusedWindow {
     Collections,
     Input,
 }
+
+pub enum WindowMotion {
+    Up,
+    Down,
+    Expand,
+    Collapse,
+}

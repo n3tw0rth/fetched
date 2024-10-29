@@ -7,7 +7,7 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 
-use crate::core::enums::{FocusedWindow, InputMode, InputStrategy};
+use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, WindowMotion};
 use crate::core::handler;
 use crate::core::helpers;
 
@@ -103,6 +103,22 @@ impl App {
         self.collection_window_list_state.select_next();
     }
 
+    // update the right collection
+    fn select_collection_to_send_motion(&mut self, motion: WindowMotion) {
+        match self.focused_window {
+            FocusedWindow::Collections => match motion {
+                WindowMotion::Up => {
+                    self.collection_window_list_state.select_next();
+                }
+                WindowMotion::Down => {
+                    self.collection_window_list_state.select_previous();
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+
     fn submit_message(&mut self) {
         handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
         self.input.clear();
@@ -132,8 +148,11 @@ impl App {
                         KeyCode::Char('1') => {
                             self.focused_window = FocusedWindow::Collections;
                         }
+                        KeyCode::Char('k') => {
+                            self.select_collection_to_send_motion(WindowMotion::Down)
+                        }
                         KeyCode::Char('j') => {
-                            self.select_next();
+                            self.select_collection_to_send_motion(WindowMotion::Up)
                         }
                         _ => {}
                     },
@@ -213,12 +232,17 @@ impl App {
             .block(Block::bordered().style(Color::White));
         frame.render_widget(url_widget, *horizontal_layout.get(1).unwrap());
 
-        let collections_widget = List::new(handler::list_collections()).block(
-            helpers::define_window_border_style(self.focused_window == FocusedWindow::Collections)
+        let collections_widget = List::new(handler::list_collections())
+            .block(
+                helpers::define_window_border_style(
+                    self.focused_window == FocusedWindow::Collections,
+                )
                 .unwrap()
                 .title("[1] Collections")
                 .title_alignment(ratatui::layout::Alignment::Center),
-        );
+            )
+            .highlight_style(Style::new().bg(Color::Gray));
+
         frame.render_stateful_widget(
             collections_widget,
             *vertical_layout.get(2).unwrap(),

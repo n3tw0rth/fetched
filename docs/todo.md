@@ -4,6 +4,7 @@
 [x] - file creation
 [x] - toggle input fild like in k9s
 [ ] - url bar with http method like in postman
+[ ] - add color themes
 [ ] - LSP
 [ ] - collection level variables
 [ ] - Aliases for commands eg: quit,q
