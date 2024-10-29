@@ -13,6 +13,7 @@ pub enum InputStrategy {
 #[derive(PartialEq)]
 pub enum FocusedWindow {
     Collections,
+    Request,
     Input,
 }
 

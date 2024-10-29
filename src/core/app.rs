@@ -10,9 +10,11 @@ use ratatui::{
 use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, WindowMotion};
 use crate::core::handler;
 use crate::core::helpers;
+use crate::core::theme;
 
 //App holds the state of the application
 pub struct App {
+    theme: theme::Config,
     // Current value of the input box
     input: String,
     // Position of cursor in the editor area.
@@ -31,6 +33,7 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         Self {
+            theme: theme::get_theme().unwrap(),
             input: String::new(),
             input_mode: InputMode::Normal,
             input_strategy: InputStrategy::Command,
@@ -127,7 +130,6 @@ impl App {
     }
 
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        println!("{:?}", self.collection_window_list_state.selected());
         loop {
             terminal.draw(|frame| self.draw(frame))?;
 
@@ -147,6 +149,9 @@ impl App {
                         }
                         KeyCode::Char('1') => {
                             self.focused_window = FocusedWindow::Collections;
+                        }
+                        KeyCode::Char('2') => {
+                            self.focused_window = FocusedWindow::Request;
                         }
                         KeyCode::Char('k') => {
                             self.select_collection_to_send_motion(WindowMotion::Down)
@@ -189,7 +194,9 @@ impl App {
         let input = Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
                 InputMode::Normal => Style::default(),
-                InputMode::Editing => Style::default().fg(Color::Yellow),
+                InputMode::Editing => {
+                    Style::default().fg(Color::from_u32(self.theme.focus.foreground))
+                }
             })
             .block(
                 Block::bordered().title(if self.input_strategy == InputStrategy::Command {
@@ -225,13 +232,14 @@ impl App {
         let http_method_widget = Paragraph::new("POST")
             .style(Style::default().add_modifier(Modifier::BOLD))
             .alignment(Alignment::Center)
-            .block(Block::bordered().style(Color::Yellow));
+            .block(Block::bordered().style(Color::from_u32(self.theme.focus.border)));
         frame.render_widget(http_method_widget, *horizontal_layout.get(0).unwrap());
         // url
         let url_widget = Paragraph::new("https://somewhere.com/api/v1/users")
             .block(Block::bordered().style(Color::White));
         frame.render_widget(url_widget, *horizontal_layout.get(1).unwrap());
 
+        // collections window
         let collections_widget = List::new(handler::list_collections())
             .block(
                 helpers::define_window_border_style(
@@ -241,7 +249,7 @@ impl App {
                 .title("[1] Collections")
                 .title_alignment(ratatui::layout::Alignment::Center),
             )
-            .highlight_style(Style::new().bg(Color::Gray));
+            .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
 
         frame.render_stateful_widget(
             collections_widget,
