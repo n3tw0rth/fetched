@@ -475,6 +475,7 @@ dependencies = [
  "dirs",
  "ratatui",
  "serde",
+ "strum",
  "toml",
 ]
 

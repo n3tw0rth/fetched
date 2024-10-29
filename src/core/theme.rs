@@ -5,13 +5,13 @@ use toml::de::Error;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub focus: Colors,
-    pub normal: Colors,
+    //pub normal: Colors,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Colors {
     pub foreground: u32,
-    pub background: u32,
+    //pub background: u32,
     pub highlight: u32,
     pub border: u32,
 }

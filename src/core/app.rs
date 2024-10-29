@@ -3,7 +3,7 @@ use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, List, ListState, Paragraph},
+    widgets::{Block, List, ListState, Paragraph, Tabs},
     DefaultTerminal, Frame,
 };
 
@@ -28,6 +28,8 @@ pub struct App {
     // state
     // collections
     collection_window_list_state: ListState,
+    // request
+    selected_tab: usize,
 }
 
 impl App {
@@ -38,9 +40,10 @@ impl App {
             input_mode: InputMode::Normal,
             input_strategy: InputStrategy::Command,
             character_index: 0,
-            focused_window: FocusedWindow::Input,
+            focused_window: FocusedWindow::Collections,
             //state
             collection_window_list_state: ListState::default().with_selected(Some(1)),
+            selected_tab: 0,
         }
     }
 
@@ -118,6 +121,23 @@ impl App {
                 }
                 _ => {}
             },
+            FocusedWindow::Request => match motion {
+                WindowMotion::Left => {
+                    if self.selected_tab == 0 {
+                        self.selected_tab = 2;
+                    } else {
+                        self.selected_tab = self.selected_tab - 1;
+                    };
+                }
+                WindowMotion::Right => {
+                    if self.selected_tab == 2 {
+                        self.selected_tab = 0;
+                    } else {
+                        self.selected_tab = self.selected_tab + 1;
+                    };
+                }
+                _ => {}
+            },
             _ => {}
         }
     }
@@ -158,6 +178,12 @@ impl App {
                         }
                         KeyCode::Char('j') => {
                             self.select_collection_to_send_motion(WindowMotion::Up)
+                        }
+                        KeyCode::Char('h') => {
+                            self.select_collection_to_send_motion(WindowMotion::Left)
+                        }
+                        KeyCode::Char('l') => {
+                            self.select_collection_to_send_motion(WindowMotion::Right)
                         }
                         _ => {}
                     },
@@ -224,7 +250,8 @@ impl App {
             )),
         }
 
-        // url widget
+        // 1st horizontal layout
+        // split the 2nd vertical layout horizontally
         let horizontal_layout: [Rect; 2] =
             Layout::horizontal([Constraint::Length(8), Constraint::Min(1)])
                 .areas(*vertical_layout.get(1).unwrap());
@@ -239,6 +266,11 @@ impl App {
             .block(Block::bordered().style(Color::White));
         frame.render_widget(url_widget, *horizontal_layout.get(1).unwrap());
 
+        // 2st horizontal layout
+        // split the 3nd vertical layout horizontally
+        let horizontal_layout_2: [Rect; 2] =
+            Layout::horizontal([Constraint::Length(50), Constraint::Min(50)])
+                .areas(*vertical_layout.get(2).unwrap());
         // collections window
         let collections_widget = List::new(handler::list_collections())
             .block(
@@ -251,10 +283,22 @@ impl App {
             )
             .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
 
+        let requests_widget = Tabs::new(["tab 1", "tab 2"])
+            .select(self.selected_tab)
+            .block(
+                helpers::define_window_border_style(self.focused_window == FocusedWindow::Request)
+                    .unwrap()
+                    .title("[2] Request")
+                    .title_alignment(ratatui::layout::Alignment::Center),
+            )
+            .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
+
         frame.render_stateful_widget(
             collections_widget,
-            *vertical_layout.get(2).unwrap(),
+            *horizontal_layout_2.get(0).unwrap(),
             &mut self.collection_window_list_state,
         );
+
+        frame.render_widget(requests_widget, *horizontal_layout_2.get(1).unwrap());
     }
 }
