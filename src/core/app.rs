@@ -3,7 +3,7 @@ use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, List, Paragraph},
+    widgets::{Block, List, ListState, Paragraph},
     DefaultTerminal, Frame,
 };
 
@@ -21,21 +21,23 @@ pub struct App {
     input_mode: InputMode,
     // Input strategy
     input_strategy: InputStrategy,
-    // History of recorded messages
-    messages: Vec<String>,
     // Focused window
     focused_window: FocusedWindow,
+    // state
+    // collections
+    collection_window_list_state: ListState,
 }
 
 impl App {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             input: String::new(),
             input_mode: InputMode::Normal,
             input_strategy: InputStrategy::Command,
-            messages: Vec::new(),
             character_index: 0,
             focused_window: FocusedWindow::Input,
+            //state
+            collection_window_list_state: ListState::default().with_selected(Some(1)),
         }
     }
 
@@ -97,24 +99,28 @@ impl App {
         self.character_index = 0;
     }
 
+    fn select_next(&mut self) {
+        self.collection_window_list_state.select_next();
+    }
+
     fn submit_message(&mut self) {
         handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
-        self.messages.push(self.input.clone());
         self.input.clear();
         self.reset_cursor();
         self.input_mode = InputMode::Normal;
     }
 
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
+        println!("{:?}", self.collection_window_list_state.selected());
         loop {
             terminal.draw(|frame| self.draw(frame))?;
 
             if let Event::Key(key) = event::read()? {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
-                        KeyCode::Char('q') => {
-                            return Ok(());
-                        }
+                        //KeyCode::Char('q') => {
+                        //    return Ok(());
+                        //}
                         KeyCode::Char(':') => {
                             self.input_strategy = InputStrategy::Command;
                             self.input_mode = InputMode::Editing;
@@ -123,8 +129,12 @@ impl App {
                             self.input_strategy = InputStrategy::Search;
                             self.input_mode = InputMode::Editing;
                         }
-                        KeyCode::Char('1') => self.focused_window = FocusedWindow::Collections,
-
+                        KeyCode::Char('1') => {
+                            self.focused_window = FocusedWindow::Collections;
+                        }
+                        KeyCode::Char('j') => {
+                            self.select_next();
+                        }
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
@@ -142,7 +152,7 @@ impl App {
         }
     }
 
-    fn draw(&self, frame: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         let mut vertical_layout: [Rect; 3] = Layout::vertical([
             Constraint::Length(0),
             Constraint::Length(3),
@@ -209,6 +219,10 @@ impl App {
                 .title("[1] Collections")
                 .title_alignment(ratatui::layout::Alignment::Center),
         );
-        frame.render_widget(collections_widget, *vertical_layout.get(2).unwrap());
+        frame.render_stateful_widget(
+            collections_widget,
+            *vertical_layout.get(2).unwrap(),
+            &mut self.collection_window_list_state,
+        );
     }
 }

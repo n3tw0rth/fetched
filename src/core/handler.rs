@@ -1,4 +1,5 @@
 use crate::core::enums::InputStrategy;
+use crossterm::terminal;
 use dirs::home_dir;
 use ratatui::widgets::ListItem;
 use std::fs::File;
@@ -16,6 +17,11 @@ pub fn edit_event_handler(input_strategy: InputStrategy, input: String) {
                 filename = format!("{filename}{file_format}").to_string();
                 println!("{0}", filename);
                 _ = File::create(filename);
+            }
+            "q" => {
+                _ = std::process::Command::new("clear").status();
+                _ = terminal::disable_raw_mode();
+                std::process::exit(0x0100);
             }
             _ => {}
         }
