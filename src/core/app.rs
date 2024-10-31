@@ -124,13 +124,13 @@ impl App {
             FocusedWindow::Request => match motion {
                 WindowMotion::Left => {
                     if self.selected_tab == 0 {
-                        self.selected_tab = 2;
+                        self.selected_tab = 1;
                     } else {
                         self.selected_tab = self.selected_tab - 1;
                     };
                 }
                 WindowMotion::Right => {
-                    if self.selected_tab == 2 {
+                    if self.selected_tab == 1 {
                         self.selected_tab = 0;
                     } else {
                         self.selected_tab = self.selected_tab + 1;

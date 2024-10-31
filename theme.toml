@@ -1,8 +1,8 @@
 [focus]
-foreground = 0x007AB2D3
+foreground = 0x00FF9C73
 background = 0x0037AFE1
-highlight = 0x00DFF2EB
-border  = 0x004CC9FE
+highlight = 0x00CDC1FF
+border  = 0x007ED4AD
 
 [normal]
 foreground = 0x007AB2D3
