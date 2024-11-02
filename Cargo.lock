@@ -476,6 +476,7 @@ dependencies = [
  "ratatui",
  "serde",
  "strum",
+ "strum_macros",
  "toml",
 ]
 

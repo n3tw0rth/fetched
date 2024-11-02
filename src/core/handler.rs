@@ -21,6 +21,7 @@ pub fn edit_event_handler(input_strategy: InputStrategy, input: String) {
             "q" => {
                 _ = std::process::Command::new("clear").status();
                 _ = terminal::disable_raw_mode();
+                crate::core::helpers::clear_logger();
                 std::process::exit(0x0100);
             }
             _ => {}

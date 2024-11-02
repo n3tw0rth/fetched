@@ -1,4 +1,5 @@
-use strum::{Display, EnumIter, FromRepr};
+use strum::IntoEnumIterator;
+use strum_macros::{Display, EnumIter, FromRepr};
 
 #[derive(Clone, PartialEq)]
 pub enum InputMode {
@@ -29,15 +30,15 @@ pub enum WindowMotion {
 }
 
 // widgets
-#[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
-pub enum SelectedTab {
+#[derive(Default, Debug, Clone, Copy, Display, FromRepr, EnumIter)]
+pub enum RequestWidgetTabs {
     #[default]
-    #[strum(to_string = "Tab 1")]
-    Tab1,
-    #[strum(to_string = "Tab 2")]
-    Tab2,
-    #[strum(to_string = "Tab 3")]
-    Tab3,
-    #[strum(to_string = "Tab 4")]
-    Tab4,
+    #[strum(to_string = "Header")]
+    Header,
+    #[strum(to_string = "Body")]
+    Body,
+    #[strum(to_string = "Query")]
+    Query,
+    #[strum(to_string = "Authentication")]
+    Authentication,
 }

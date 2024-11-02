@@ -3,34 +3,20 @@ use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, List, ListState, Paragraph, Tabs},
+    symbols,
+    widgets::{Block, Borders, List, ListState, Paragraph, Tabs},
     DefaultTerminal, Frame,
 };
 
+use crate::components::manager;
+use crate::components::structs::App;
 use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, WindowMotion};
 use crate::core::handler;
 use crate::core::helpers;
 use crate::core::theme;
+use strum::IntoEnumIterator;
 
-//App holds the state of the application
-pub struct App {
-    theme: theme::Config,
-    // Current value of the input box
-    input: String,
-    // Position of cursor in the editor area.
-    character_index: usize,
-    // Current input mode
-    input_mode: InputMode,
-    // Input strategy
-    input_strategy: InputStrategy,
-    // Focused window
-    focused_window: FocusedWindow,
-    // state
-    // collections
-    collection_window_list_state: ListState,
-    // request
-    selected_tab: usize,
-}
+use super::enums::RequestWidgetTabs;
 
 impl App {
     pub fn new() -> Self {
@@ -124,13 +110,13 @@ impl App {
             FocusedWindow::Request => match motion {
                 WindowMotion::Left => {
                     if self.selected_tab == 0 {
-                        self.selected_tab = 1;
+                        self.selected_tab = RequestWidgetTabs::iter().count() - 1;
                     } else {
                         self.selected_tab = self.selected_tab - 1;
                     };
                 }
                 WindowMotion::Right => {
-                    if self.selected_tab == 1 {
+                    if self.selected_tab == RequestWidgetTabs::iter().count() - 1 {
                         self.selected_tab = 0;
                     } else {
                         self.selected_tab = self.selected_tab + 1;
@@ -156,9 +142,6 @@ impl App {
             if let Event::Key(key) = event::read()? {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
-                        //KeyCode::Char('q') => {
-                        //    return Ok(());
-                        //}
                         KeyCode::Char(':') => {
                             self.input_strategy = InputStrategy::Command;
                             self.input_mode = InputMode::Editing;
@@ -283,7 +266,7 @@ impl App {
             )
             .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
 
-        let requests_widget = Tabs::new(["tab 1", "tab 2"])
+        let requests_widget = Tabs::new(RequestWidgetTabs::iter().map(|tab| tab.to_string()))
             .select(self.selected_tab)
             .block(
                 helpers::define_window_border_style(self.focused_window == FocusedWindow::Request)
@@ -291,6 +274,7 @@ impl App {
                     .title("[2] Request")
                     .title_alignment(ratatui::layout::Alignment::Center),
             )
+            .divider("")
             .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
 
         frame.render_stateful_widget(
@@ -298,7 +282,35 @@ impl App {
             *horizontal_layout_2.get(0).unwrap(),
             &mut self.collection_window_list_state,
         );
+        let request_widget_parent_container = horizontal_layout_2.get(1).unwrap();
 
-        frame.render_widget(requests_widget, *horizontal_layout_2.get(1).unwrap());
+        frame.render_widget(requests_widget, *request_widget_parent_container);
+
+        // select the right content to display using the select tab
+        let current_request_widget_content = manager::match_request_widget_with_opened_tab(
+            RequestWidgetTabs::iter().nth(self.selected_tab).unwrap(),
+        )
+        .unwrap();
+
+        // adjust the child Rec based on the parent to load request content
+        let request_widget_child_container = Rect::new(
+            request_widget_parent_container.x + 1,
+            request_widget_parent_container.y + 2,
+            request_widget_parent_container.width - 2,
+            request_widget_parent_container.height,
+        );
+
+        frame.render_widget(
+            current_request_widget_content,
+            request_widget_child_container,
+        );
+
+        helpers::logger(
+            format!(
+                "{:?}",
+                RequestWidgetTabs::iter().nth(self.selected_tab).unwrap(),
+            )
+            .to_string(),
+        )
     }
 }
