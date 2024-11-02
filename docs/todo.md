@@ -1,8 +1,19 @@
 ## TODO List
 
 - [x] - ratatui initial config
-- [x] - file creation
-- [x] - toggle input fild like in k9s
+- [ ] - UI
+    - [x] - toggle input fild like in k9s
+    - [ ] - (1)collections pane
+        - [ ] - List state 
+        - [ ] - show requests under collections as child
+        - [ ] - folding/opening collections
+    - [ ] - (2)request pane
+        - [ ] - show tab content for each tab
+    - [ ] - (3)response pane
+- [ ] - file creation
+    - [ ] - show folders in collections
+    - [ ] - create/delete collections
+    - [ ] - create/delete/show requests under collections
 - [ ] - url bar with http method like in postman
     - [ ] - Selectable options
 - [ ] - add color themes
