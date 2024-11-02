@@ -10,7 +10,9 @@ use ratatui::{
 
 use crate::components::manager;
 use crate::components::structs::App;
-use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, WindowMotion};
+use crate::core::enums::{
+    FocusedWindow, InputMode, InputStrategy, ThemeAttribute, ThemeState, WidgetType, WindowMotion,
+};
 use crate::core::handler;
 use crate::core::helpers;
 use crate::core::theme;
@@ -257,25 +259,57 @@ impl App {
         // collections window
         let collections_widget = List::new(handler::list_collections())
             .block(
-                helpers::define_window_border_style(
+                theme::set_border_style(
                     self.focused_window == FocusedWindow::Collections,
+                    self.theme.clone(),
                 )
                 .unwrap()
-                .title("[1] Collections")
-                .title_alignment(ratatui::layout::Alignment::Center),
+                .title("[1] Collections"),
             )
-            .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
+            .style(
+                theme::match_color_theme_for_widgets(
+                    self.theme.clone(),
+                    ThemeState::Normal,
+                    WidgetType::List,
+                )
+                .unwrap(),
+            )
+            .highlight_style(
+                theme::match_color_theme_for_widgets(
+                    self.theme.clone(),
+                    ThemeState::Focus,
+                    WidgetType::List,
+                )
+                .unwrap(),
+            );
 
         let requests_widget = Tabs::new(RequestWidgetTabs::iter().map(|tab| tab.to_string()))
             .select(self.selected_tab)
             .block(
-                helpers::define_window_border_style(self.focused_window == FocusedWindow::Request)
-                    .unwrap()
-                    .title("[2] Request")
-                    .title_alignment(ratatui::layout::Alignment::Center),
+                theme::set_border_style(
+                    self.focused_window == FocusedWindow::Request,
+                    self.theme.clone(),
+                )
+                .unwrap()
+                .title("[2] Requests"),
             )
             .divider("")
-            .highlight_style(Style::new().bg(Color::from_u32(self.theme.focus.highlight)));
+            .style(
+                theme::match_color_theme_for_widgets(
+                    self.theme.clone(),
+                    ThemeState::Normal,
+                    WidgetType::Tab,
+                )
+                .unwrap(),
+            )
+            .highlight_style(
+                theme::match_color_theme_for_widgets(
+                    self.theme.clone(),
+                    ThemeState::Focus,
+                    WidgetType::Tab,
+                )
+                .unwrap(),
+            );
 
         frame.render_stateful_widget(
             collections_widget,
@@ -304,13 +338,5 @@ impl App {
             current_request_widget_content,
             request_widget_child_container,
         );
-
-        helpers::logger(
-            format!(
-                "{:?}",
-                RequestWidgetTabs::iter().nth(self.selected_tab).unwrap(),
-            )
-            .to_string(),
-        )
     }
 }

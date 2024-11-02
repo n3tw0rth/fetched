@@ -10,6 +10,7 @@
     - [ ] - (2)request pane
         - [ ] - show tab content for each tab
     - [ ] - (3)response pane
+    - [ ] - enable/disable transparency
 - [ ] - file creation
     - [ ] - show folders in collections
     - [ ] - create/delete collections

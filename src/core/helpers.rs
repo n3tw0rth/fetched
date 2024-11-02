@@ -1,4 +1,8 @@
+use ratatui::style::Style;
+use ratatui::widgets::Widget;
 use ratatui::{style::Color, widgets::Block};
+
+use super::enums::FocusedWindow;
 pub fn define_window_border_style<'a>(focused: bool) -> anyhow::Result<Block<'a>> {
     if focused {
         Ok(Block::bordered()

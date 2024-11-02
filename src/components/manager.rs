@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::widgets::Paragraph;
 
 use super::widget_contents;
 use crate::core::enums::RequestWidgetTabs;
@@ -13,6 +13,5 @@ pub fn match_request_widget_with_opened_tab<'a>(
         RequestWidgetTabs::Query => widget_contents::query::render(),
         RequestWidgetTabs::Header => widget_contents::header::render(),
         RequestWidgetTabs::Authentication => widget_contents::auth::render(),
-        _ => Ok(Paragraph::new("Authentication").block(Block::bordered().borders(Borders::TOP))),
     }
 }

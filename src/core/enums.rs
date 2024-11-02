@@ -29,6 +29,24 @@ pub enum WindowMotion {
     Collapse,
 }
 
+pub enum WidgetType {
+    Paragraph,
+    Tab,
+    List,
+}
+
+pub enum ThemeState {
+    Focus,
+    Normal,
+}
+
+pub enum ThemeAttribute {
+    Foreground,
+    Background,
+    Highlight,
+    Border,
+}
+
 // widgets
 #[derive(Default, Debug, Clone, Copy, Display, FromRepr, EnumIter)]
 pub enum RequestWidgetTabs {
