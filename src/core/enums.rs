@@ -17,6 +17,7 @@ pub enum InputStrategy {
 pub enum FocusedWindow {
     Collections,
     Request,
+    Response,
     Input,
 }
 
@@ -59,4 +60,16 @@ pub enum RequestWidgetTabs {
     Query,
     #[strum(to_string = "Authentication")]
     Authentication,
+}
+
+#[derive(Debug, Clone, Copy, Display, FromRepr, EnumIter)]
+pub enum ResponseWidgetTabs {
+    //#[strum(to_string = "Header")]
+    //Header,
+    #[strum(to_string = "Body")]
+    ResponseBody,
+    #[strum(to_string = "Query")]
+    ResponseQuery,
+    //#[strum(to_string = "Authentication")]
+    //Authentication,
 }

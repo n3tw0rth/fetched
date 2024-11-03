@@ -3,22 +3,19 @@ use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
-    symbols,
-    widgets::{Block, Borders, List, ListState, Paragraph, Tabs},
+    widgets::{Block, List, ListState, Paragraph, Tabs},
     DefaultTerminal, Frame,
 };
 
 use crate::components::manager;
 use crate::components::structs::App;
 use crate::core::enums::{
-    FocusedWindow, InputMode, InputStrategy, ThemeAttribute, ThemeState, WidgetType, WindowMotion,
+    FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
+    WidgetType, WindowMotion,
 };
 use crate::core::handler;
-use crate::core::helpers;
 use crate::core::theme;
 use strum::IntoEnumIterator;
-
-use super::enums::RequestWidgetTabs;
 
 impl App {
     pub fn new() -> Self {
@@ -32,6 +29,7 @@ impl App {
             //state
             collection_window_list_state: ListState::default().with_selected(Some(1)),
             selected_tab: 0,
+            selected_response_tab: 0,
         }
     }
 
@@ -126,6 +124,23 @@ impl App {
                 }
                 _ => {}
             },
+            FocusedWindow::Response => match motion {
+                WindowMotion::Left => {
+                    if self.selected_response_tab == 0 {
+                        self.selected_response_tab = ResponseWidgetTabs::iter().count() - 1;
+                    } else {
+                        self.selected_response_tab = self.selected_response_tab - 1;
+                    };
+                }
+                WindowMotion::Right => {
+                    if self.selected_response_tab == ResponseWidgetTabs::iter().count() - 1 {
+                        self.selected_response_tab = 0;
+                    } else {
+                        self.selected_response_tab = self.selected_response_tab + 1;
+                    };
+                }
+                _ => {}
+            },
             _ => {}
         }
     }
@@ -157,6 +172,9 @@ impl App {
                         }
                         KeyCode::Char('2') => {
                             self.focused_window = FocusedWindow::Request;
+                        }
+                        KeyCode::Char('3') => {
+                            self.focused_window = FocusedWindow::Response;
                         }
                         KeyCode::Char('k') => {
                             self.select_collection_to_send_motion(WindowMotion::Down)
@@ -282,7 +300,21 @@ impl App {
                 )
                 .unwrap(),
             );
+        frame.render_stateful_widget(
+            collections_widget,
+            *horizontal_layout_2.get(0).unwrap(),
+            &mut self.collection_window_list_state,
+        );
 
+        let sub_vertical_layout_right: [Rect; 2] =
+            Layout::vertical([Constraint::Length(50), Constraint::Min(30)])
+                .areas(*horizontal_layout_2.get(1).unwrap());
+
+        //
+        //
+        // Request Widget
+        //
+        //
         let requests_widget = Tabs::new(RequestWidgetTabs::iter().map(|tab| tab.to_string()))
             .select(self.selected_tab)
             .block(
@@ -311,12 +343,7 @@ impl App {
                 .unwrap(),
             );
 
-        frame.render_stateful_widget(
-            collections_widget,
-            *horizontal_layout_2.get(0).unwrap(),
-            &mut self.collection_window_list_state,
-        );
-        let request_widget_parent_container = horizontal_layout_2.get(1).unwrap();
+        let request_widget_parent_container = sub_vertical_layout_right.get(0).unwrap();
 
         frame.render_widget(requests_widget, *request_widget_parent_container);
 
@@ -337,6 +364,64 @@ impl App {
         frame.render_widget(
             current_request_widget_content,
             request_widget_child_container,
+        );
+
+        //
+        //
+        // Response Widget
+        //
+        //
+        let response_widget = Tabs::new(ResponseWidgetTabs::iter().map(|tab| tab.to_string()))
+            .select(self.selected_response_tab)
+            .block(
+                theme::set_border_style(
+                    self.focused_window == FocusedWindow::Response,
+                    self.theme.clone(),
+                )
+                .unwrap()
+                .title("[3] Response"),
+            )
+            .divider("")
+            .style(
+                theme::match_color_theme_for_widgets(
+                    self.theme.clone(),
+                    ThemeState::Normal,
+                    WidgetType::Tab,
+                )
+                .unwrap(),
+            )
+            .highlight_style(
+                theme::match_color_theme_for_widgets(
+                    self.theme.clone(),
+                    ThemeState::Focus,
+                    WidgetType::Tab,
+                )
+                .unwrap(),
+            );
+
+        let response_widget_parent_container = sub_vertical_layout_right.get(1).unwrap();
+
+        frame.render_widget(response_widget, *response_widget_parent_container);
+
+        // select the right content to display using the select tab
+        let current_response_widget_content = manager::match_response_widget_with_opened_tab(
+            ResponseWidgetTabs::iter()
+                .nth(self.selected_response_tab)
+                .unwrap(),
+        )
+        .unwrap();
+
+        // adjust the child Rec based on the parent to load request content
+        let response_widget_child_container = Rect::new(
+            response_widget_parent_container.x + 1,
+            response_widget_parent_container.y + 2,
+            response_widget_parent_container.width - 2,
+            response_widget_parent_container.height,
+        );
+
+        frame.render_widget(
+            current_response_widget_content,
+            response_widget_child_container,
         );
     }
 }

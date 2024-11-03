@@ -33,11 +33,11 @@ pub fn set_border_style<'a>(
 ) -> Result<Block<'a>, Box<dyn std::error::Error>> {
     if is_window_selected {
         Ok(Block::bordered()
-            .title_alignment(ratatui::layout::Alignment::Center)
+            .title_alignment(ratatui::layout::Alignment::Left)
             .style(Style::new().bg(Color::from_u32(theme.focus.background))))
     } else {
         Ok(Block::bordered()
-            .title_alignment(ratatui::layout::Alignment::Center)
+            .title_alignment(ratatui::layout::Alignment::Left)
             .style(
                 Style::new(), //.bg(Color::from_u32(theme.normal.background))
             ))

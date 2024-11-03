@@ -21,6 +21,8 @@ pub struct App {
     pub collection_window_list_state: ListState,
     // request
     pub selected_tab: usize,
+    // response
+    pub selected_response_tab: usize,
 }
 
 pub struct RequestWidget {
