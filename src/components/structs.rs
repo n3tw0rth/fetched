@@ -1,4 +1,4 @@
-use ratatui::widgets::ListState;
+use ratatui::widgets::{ListItem, ListState};
 
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, WindowOperation,
@@ -20,6 +20,7 @@ pub struct App {
     pub focused_window: FocusedWindow,
     // state
     // collections
+    pub collections: Vec<String>,
     pub collection_window_list_state: ListState,
     // request
     pub selected_tab: usize,

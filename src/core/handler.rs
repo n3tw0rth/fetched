@@ -2,6 +2,7 @@ use crate::core::enums::InputStrategy;
 use crossterm::terminal;
 use dirs::{config_dir, home_dir};
 use ratatui::widgets::ListItem;
+use std::fmt;
 use std::fs::File;
 use std::fs::{self};
 
@@ -47,7 +48,7 @@ pub fn create_config_folder() {
 }
 
 // collection contain lists of request data
-pub fn list_collections<'a>() -> Vec<ListItem<'a>> {
+pub fn list_collections() -> Vec<String> {
     fs::read_dir(Constants::new().app_config_path)
         .unwrap()
         .filter_map(|entry| {
@@ -61,15 +62,15 @@ pub fn list_collections<'a>() -> Vec<ListItem<'a>> {
         })
         .enumerate()
         .map(|entry| {
-            ListItem::new(format!(
-                "\u{f024b} {}",
-                entry
-                    .1
-                    .display()
-                    .to_string()
-                    .replace(&Constants::new().app_config_path.display().to_string(), "")
-                    .replace("/", "")
-            ))
+            //"\u{f024b} {}",
+            entry
+                .1
+                .display()
+                .to_string()
+                .strip_prefix(&Constants::new().app_config_path.display().to_string())
+                .unwrap()
+                .to_string()
+                .replace("/", "")
         })
         .collect()
 }
@@ -80,5 +81,11 @@ pub fn get_project_path() -> Result<std::path::PathBuf, Box<dyn std::error::Erro
 
 pub fn create_collection(collection_name: String) -> Result<(), Box<dyn std::error::Error>> {
     _ = fs::create_dir(get_project_path().unwrap().join(collection_name));
+    Ok(())
+}
+
+pub fn delete_collection(collection_name: String) -> Result<(), Box<dyn std::error::Error>> {
+    super::helpers::logger(collection_name.clone());
+    _ = fs::remove_dir(get_project_path().unwrap().join(collection_name)).unwrap();
     Ok(())
 }

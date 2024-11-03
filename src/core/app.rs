@@ -27,6 +27,7 @@ impl App {
             character_index: 0,
             focused_window: FocusedWindow::Collections,
             //state
+            collections: handler::list_collections(),
             collection_window_list_state: ListState::default().with_selected(Some(1)),
             selected_tab: 0,
             selected_response_tab: 0,
@@ -105,10 +106,21 @@ impl App {
                 WindowOperation::CollectionCreate => {
                     handler::create_collection(promt).unwrap();
                 }
+                WindowOperation::CollectionDelete => {
+                    if promt == "y" {
+                        _ = handler::delete_collection(
+                            self.collections
+                                .get(self.collection_window_list_state.selected().unwrap())
+                                .unwrap()
+                                .to_string(),
+                        );
+                    }
+                }
                 _ => todo!(),
             },
             _ => todo!(),
         }
+        self.collections = handler::list_collections()
     }
 
     fn select_collection_to_send_motion(&mut self, motion: WindowMotion) {
@@ -208,6 +220,7 @@ impl App {
                             self.select_collection_to_send_motion(WindowMotion::Right)
                         }
                         KeyCode::Char('a') => self.prompt(WindowOperation::CollectionCreate),
+                        KeyCode::Char('d') => self.prompt(WindowOperation::CollectionDelete),
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
@@ -233,6 +246,7 @@ impl App {
         } else {
             match self.current_operation {
                 WindowOperation::CollectionCreate => Ok("Collection Name".to_string()),
+                WindowOperation::CollectionDelete => Ok("Delete Collection [y/N]".to_string()),
                 _ => todo!(),
             }
         }
@@ -302,7 +316,7 @@ impl App {
             Layout::horizontal([Constraint::Length(50), Constraint::Min(50)])
                 .areas(*vertical_layout.get(2).unwrap());
         // collections window
-        let collections_widget = List::new(handler::list_collections())
+        let collections_widget = List::new(self.collections.clone())
             .block(
                 theme::set_border_style(
                     self.focused_window == FocusedWindow::Collections,
