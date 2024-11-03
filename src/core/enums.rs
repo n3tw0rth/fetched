@@ -33,11 +33,9 @@ pub enum WindowMotion {
 
 #[derive(Clone, Copy)]
 pub enum WindowOperation {
-    Create,
-    Delete,
-    Rename,
-    Copy,
-    Paste,
+    CollectionCreate,
+    CollectionDelete,
+    CollecitonRename,
     Null,
 }
 

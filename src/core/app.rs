@@ -1,3 +1,11 @@
+use crate::components::manager;
+use crate::components::structs::App;
+use crate::core::enums::{
+    FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
+    WidgetType, WindowMotion, WindowOperation,
+};
+use crate::core::handler;
+use crate::core::theme;
 use color_eyre::Result;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
@@ -6,16 +14,7 @@ use ratatui::{
     widgets::{Block, List, ListState, Paragraph, Tabs},
     DefaultTerminal, Frame,
 };
-
-use crate::components::manager;
-use crate::components::structs::App;
-use crate::core::enums::{
-    FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
-    WidgetType, WindowMotion, WindowOperation,
-};
-use crate::core::handler;
-use crate::core::helpers;
-use crate::core::theme;
+use std::error::Error;
 use strum::IntoEnumIterator;
 
 impl App {
@@ -103,7 +102,7 @@ impl App {
     fn execute_operation_on_selected_window(&mut self, operation: WindowOperation, promt: String) {
         match self.focused_window {
             FocusedWindow::Collections => match operation {
-                WindowOperation::Create => {
+                WindowOperation::CollectionCreate => {
                     handler::create_collection(promt).unwrap();
                 }
                 _ => todo!(),
@@ -208,7 +207,7 @@ impl App {
                         KeyCode::Char('l') => {
                             self.select_collection_to_send_motion(WindowMotion::Right)
                         }
-                        KeyCode::Char('a') => self.prompt(WindowOperation::Create),
+                        KeyCode::Char('a') => self.prompt(WindowOperation::CollectionCreate),
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
@@ -222,6 +221,19 @@ impl App {
                     },
                     InputMode::Editing => {}
                 }
+            }
+        }
+    }
+
+    fn decide_input_title(&self) -> Result<String, Box<dyn Error>> {
+        if self.input_strategy == InputStrategy::Command {
+            Ok("Command".to_string())
+        } else if self.input_strategy == InputStrategy::Search {
+            Ok("Search".to_string())
+        } else {
+            match self.current_operation {
+                WindowOperation::CollectionCreate => Ok("Collection Name".to_string()),
+                _ => todo!(),
             }
         }
     }
@@ -248,13 +260,7 @@ impl App {
                     Style::default().fg(Color::from_u32(self.theme.focus.foreground))
                 }
             })
-            .block(
-                Block::bordered().title(if self.input_strategy == InputStrategy::Command {
-                    "Command"
-                } else {
-                    "Search"
-                }),
-            );
+            .block(Block::bordered().title(self.decide_input_title().unwrap()));
         // render the input field only in editing mode
         if self.input_mode == InputMode::Editing {
             frame.render_widget(input, *vertical_layout.get(0).unwrap());
