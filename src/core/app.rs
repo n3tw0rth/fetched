@@ -29,7 +29,11 @@ impl App {
             //state
             collections: handler::list_collections(),
             collection_window_list_state: ListState::default().with_selected(Some(1)),
+            selected_collection: "".to_string(),
+            show_collection_children: false,
+            // request tabs
             selected_tab: 0,
+            //response tabs
             selected_response_tab: 0,
             current_operation: WindowOperation::Null,
         }
@@ -104,23 +108,43 @@ impl App {
         match self.focused_window {
             FocusedWindow::Collections => match operation {
                 WindowOperation::CollectionCreate => {
-                    handler::create_collection(promt).unwrap();
+                    if self.show_collection_children {
+                        handler::create_collection_children(self.selected_collection.clone(), promt)
+                            .unwrap()
+                    } else {
+                        handler::create_collection(promt).unwrap();
+                    }
                 }
                 WindowOperation::CollectionDelete => {
                     if promt == "y" {
-                        _ = handler::delete_collection(
-                            self.collections
-                                .get(self.collection_window_list_state.selected().unwrap())
-                                .unwrap()
-                                .to_string(),
-                        );
+                        if self.show_collection_children {
+                            handler::delete_collection_children(
+                                self.selected_collection.clone(),
+                                self.collections
+                                    .get(self.collection_window_list_state.selected().unwrap())
+                                    .unwrap()
+                                    .to_string(),
+                            )
+                            .unwrap();
+                        } else {
+                            _ = handler::delete_collection(
+                                self.collections
+                                    .get(self.collection_window_list_state.selected().unwrap())
+                                    .unwrap()
+                                    .to_string(),
+                            );
+                        }
                     }
                 }
                 _ => todo!(),
             },
             _ => todo!(),
         }
-        self.collections = handler::list_collections()
+        if self.show_collection_children {
+            self.collections = handler::list_collection_children(self.selected_collection.clone())
+        } else {
+            self.collections = handler::list_collections()
+        }
     }
 
     fn select_collection_to_send_motion(&mut self, motion: WindowMotion) {
@@ -131,6 +155,27 @@ impl App {
                 }
                 WindowMotion::Down => {
                     self.collection_window_list_state.select_previous();
+                }
+                WindowMotion::Left => {
+                    if self.show_collection_children {
+                        self.show_collection_children = false;
+                        self.selected_collection = "".to_string();
+                        self.collections = super::handler::list_collections()
+                    }
+                }
+                WindowMotion::Right => {
+                    if !self.show_collection_children {
+                        self.show_collection_children = true;
+                        self.selected_collection = self
+                            .collections
+                            .get(self.collection_window_list_state.selected().unwrap())
+                            .unwrap()
+                            .to_string();
+
+                        self.collections = super::handler::list_collection_children(
+                            self.selected_collection.clone(),
+                        )
+                    }
                 }
                 _ => {}
             },
@@ -245,7 +290,13 @@ impl App {
             Ok("Search".to_string())
         } else {
             match self.current_operation {
-                WindowOperation::CollectionCreate => Ok("Collection Name".to_string()),
+                WindowOperation::CollectionCreate => {
+                    if self.show_collection_children {
+                        Ok("Request Name".to_string())
+                    } else {
+                        Ok("Collection Name".to_string())
+                    }
+                }
                 WindowOperation::CollectionDelete => Ok("Delete Collection [y/N]".to_string()),
                 _ => todo!(),
             }
@@ -323,7 +374,7 @@ impl App {
                     self.theme.clone(),
                 )
                 .unwrap()
-                .title("[1] Collections"),
+                .title(format!("[1] Collections  {}", self.selected_collection)),
             )
             .style(
                 theme::match_color_theme_for_widgets(

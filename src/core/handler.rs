@@ -75,6 +75,42 @@ pub fn list_collections() -> Vec<String> {
         .collect()
 }
 
+pub fn list_collection_children(collection_name: String) -> Vec<String> {
+    fs::read_dir(
+        Constants::new()
+            .app_config_path
+            .join(collection_name.clone()),
+    )
+    .unwrap()
+    .filter_map(|entry| {
+        let entry = entry.ok()?; // Handle errors with filter_map
+        let metadata = entry.metadata().ok()?;
+        if metadata.is_file() {
+            Some(entry.path()) // Collect path if it's a file
+        } else {
+            None
+        }
+    })
+    .enumerate()
+    .map(|entry| {
+        entry
+            .1
+            .display()
+            .to_string()
+            .strip_prefix(
+                &Constants::new()
+                    .app_config_path
+                    .join(collection_name.clone())
+                    .display()
+                    .to_string(),
+            )
+            .unwrap()
+            .to_string()
+            .replace("/", "")
+    })
+    .collect()
+}
+
 pub fn get_project_path() -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
     Ok(config_dir().expect("dir does not exists").join("fetched"))
 }
@@ -84,8 +120,43 @@ pub fn create_collection(collection_name: String) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
+pub fn create_collection_children(
+    collection_name: String,
+    children: String,
+) -> Result<(), Box<dyn std::error::Error>> {
+    _ = fs::File::create(
+        get_project_path()
+            .unwrap()
+            .join(collection_name)
+            .join(children),
+    );
+    Ok(())
+}
+
 pub fn delete_collection(collection_name: String) -> Result<(), Box<dyn std::error::Error>> {
     super::helpers::logger(collection_name.clone());
     _ = fs::remove_dir(get_project_path().unwrap().join(collection_name)).unwrap();
+    Ok(())
+}
+
+pub fn delete_collection_children(
+    collection_name: String,
+    children: String,
+) -> Result<(), Box<dyn std::error::Error>> {
+    super::helpers::logger(
+        get_project_path()
+            .unwrap()
+            .join(collection_name.clone())
+            .join(children.clone())
+            .display()
+            .to_string(),
+    );
+    _ = fs::remove_file(
+        get_project_path()
+            .unwrap()
+            .join(collection_name)
+            .join(children),
+    )
+    .unwrap();
     Ok(())
 }

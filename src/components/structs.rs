@@ -22,6 +22,8 @@ pub struct App {
     // collections
     pub collections: Vec<String>,
     pub collection_window_list_state: ListState,
+    pub selected_collection: String,
+    pub show_collection_children: bool,
     // request
     pub selected_tab: usize,
     // response
