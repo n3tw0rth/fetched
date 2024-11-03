@@ -160,3 +160,10 @@ pub fn delete_collection_children(
     .unwrap();
     Ok(())
 }
+
+pub fn open_file(collection: String, children: String) {
+    todo!()
+    //_ = std::process::Command::new("nvim")
+    //    .arg(get_project_path().unwrap().join(collection).join(children))
+    //    .spawn();
+}

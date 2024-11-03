@@ -104,6 +104,36 @@ impl App {
         self.current_operation = operation;
     }
 
+    fn get_selected_children(&self)->Result<String, Box<dyn std::error::Error>>{
+Ok(
+
+                                self.collections
+                                    .get(self.collection_window_list_state.selected().unwrap())
+                                    .unwrap()
+                                    .to_string()
+)
+    }
+
+    fn execute_operation_on_selected_window(&self,operation: WindowOperation){
+ match self.focused_window{
+     FocusedWindow::Collections=>{
+         match operation{
+WindowOperation::Open=>{
+    if self.show_collection_children{
+ handler::open_file(self.selected_collection.clone(),
+ self.get_selected_children().unwrap()
+     ) 
+}else{
+todo!()
+    }
+}
+_=>todo!()
+         }
+     },
+     _=>todo!()
+ }
+    }
+
     fn execute_operation_on_selected_window_with_promt(
         &mut self,
         operation: WindowOperation,
@@ -273,7 +303,7 @@ impl App {
                         }
                         KeyCode::Char('a') => self.prompt(WindowOperation::Create),
                         KeyCode::Char('d') => self.prompt(WindowOperation::Delete),
-                        KeyCode::Char('o') => self.prompt(WindowOperation::Open),
+                        KeyCode::Char('o') => self.execute_operation_on_selected_window(WindowOperation::Open),
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
@@ -375,31 +405,42 @@ impl App {
             Layout::horizontal([Constraint::Length(50), Constraint::Min(50)])
                 .areas(*vertical_layout.get(2).unwrap());
         // collections window
-        let collections_widget = List::new(self.collections.clone())
-            .block(
-                theme::set_border_style(
-                    self.focused_window == FocusedWindow::Collections,
-                    self.theme.clone(),
-                )
-                .unwrap()
-                .title(format!("[1] Collections  {}", self.selected_collection)),
+        let collections_widget = List::new(
+            self.collections
+                .clone()
+                .iter()
+                .map(|item| 
+                   if self.show_collection_children{
+                   "\u{f323} ".to_string() 
+                   }else{
+                   "\u{f024b} ".to_string() 
+                   } 
+                    + item),
+        )
+        .block(
+            theme::set_border_style(
+                self.focused_window == FocusedWindow::Collections,
+                self.theme.clone(),
             )
-            .style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Normal,
-                    WidgetType::List,
-                )
-                .unwrap(),
+            .unwrap()
+            .title(format!("[1] Collections  {}", self.selected_collection)),
+        )
+        .style(
+            theme::match_color_theme_for_widgets(
+                self.theme.clone(),
+                ThemeState::Normal,
+                WidgetType::List,
             )
-            .highlight_style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Focus,
-                    WidgetType::List,
-                )
-                .unwrap(),
-            );
+            .unwrap(),
+        )
+        .highlight_style(
+            theme::match_color_theme_for_widgets(
+                self.theme.clone(),
+                ThemeState::Focus,
+                WidgetType::List,
+            )
+            .unwrap(),
+        );
         frame.render_stateful_widget(
             collections_widget,
             *horizontal_layout_2.get(0).unwrap(),
