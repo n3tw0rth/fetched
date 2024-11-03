@@ -104,10 +104,14 @@ impl App {
         self.current_operation = operation;
     }
 
-    fn execute_operation_on_selected_window(&mut self, operation: WindowOperation, promt: String) {
+    fn execute_operation_on_selected_window_with_promt(
+        &mut self,
+        operation: WindowOperation,
+        promt: String,
+    ) {
         match self.focused_window {
             FocusedWindow::Collections => match operation {
-                WindowOperation::CollectionCreate => {
+                WindowOperation::Create => {
                     if self.show_collection_children {
                         handler::create_collection_children(self.selected_collection.clone(), promt)
                             .unwrap()
@@ -115,7 +119,7 @@ impl App {
                         handler::create_collection(promt).unwrap();
                     }
                 }
-                WindowOperation::CollectionDelete => {
+                WindowOperation::Delete => {
                     if promt == "y" {
                         if self.show_collection_children {
                             handler::delete_collection_children(
@@ -219,7 +223,10 @@ impl App {
 
     fn submit_message(&mut self) {
         if self.input_strategy == InputStrategy::Prompt {
-            self.execute_operation_on_selected_window(self.current_operation, self.input.clone());
+            self.execute_operation_on_selected_window_with_promt(
+                self.current_operation,
+                self.input.clone(),
+            );
         } else {
             handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
         }
@@ -264,8 +271,9 @@ impl App {
                         KeyCode::Char('l') => {
                             self.select_collection_to_send_motion(WindowMotion::Right)
                         }
-                        KeyCode::Char('a') => self.prompt(WindowOperation::CollectionCreate),
-                        KeyCode::Char('d') => self.prompt(WindowOperation::CollectionDelete),
+                        KeyCode::Char('a') => self.prompt(WindowOperation::Create),
+                        KeyCode::Char('d') => self.prompt(WindowOperation::Delete),
+                        KeyCode::Char('o') => self.prompt(WindowOperation::Open),
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
@@ -290,14 +298,14 @@ impl App {
             Ok("Search".to_string())
         } else {
             match self.current_operation {
-                WindowOperation::CollectionCreate => {
+                WindowOperation::Create => {
                     if self.show_collection_children {
                         Ok("Request Name".to_string())
                     } else {
                         Ok("Collection Name".to_string())
                     }
                 }
-                WindowOperation::CollectionDelete => Ok("Delete Collection [y/N]".to_string()),
+                WindowOperation::Delete => Ok("Delete Collection [y/N]".to_string()),
                 _ => todo!(),
             }
         }

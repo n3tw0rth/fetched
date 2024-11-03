@@ -5,7 +5,8 @@
     - [x] - toggle input fild like in k9s
     - [ ] - (1)collections pane
         - [x] - List state 
-        - [ ] - walk into collections and show requests
+        - [x] - walk into collections and show requests
+        - [ ] - open files
         - [ ] - folding/opening collections
     - [ ] - (2)request pane
         - [ ] - show tab content for each tab
