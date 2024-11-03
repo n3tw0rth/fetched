@@ -4,8 +4,8 @@
 - [ ] - UI
     - [x] - toggle input fild like in k9s
     - [ ] - (1)collections pane
-        - [ ] - List state 
-        - [ ] - show requests under collections as child
+        - [x] - List state 
+        - [ ] - walk into collections and show requests
         - [ ] - folding/opening collections
     - [ ] - (2)request pane
         - [ ] - show tab content for each tab

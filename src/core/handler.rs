@@ -1,6 +1,6 @@
 use crate::core::enums::InputStrategy;
 use crossterm::terminal;
-use dirs::home_dir;
+use dirs::{config_dir, home_dir};
 use ratatui::widgets::ListItem;
 use std::fs::File;
 use std::fs::{self};
@@ -72,4 +72,13 @@ pub fn list_collections<'a>() -> Vec<ListItem<'a>> {
             ))
         })
         .collect()
+}
+
+pub fn get_project_path() -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
+    Ok(config_dir().expect("dir does not exists").join("fetched"))
+}
+
+pub fn create_collection(collection_name: String) -> Result<(), Box<dyn std::error::Error>> {
+    _ = fs::create_dir(get_project_path().unwrap().join(collection_name));
+    Ok(())
 }

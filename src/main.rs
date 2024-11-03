@@ -8,6 +8,7 @@ mod io;
 use components::structs::App;
 
 fn main() -> Result<()> {
+    core::handler::create_config_folder();
     color_eyre::install()?;
     let terminal = ratatui::init();
     let app_result = App::new().run(terminal);

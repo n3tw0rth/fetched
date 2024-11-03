@@ -11,9 +11,10 @@ use crate::components::manager;
 use crate::components::structs::App;
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
-    WidgetType, WindowMotion,
+    WidgetType, WindowMotion, WindowOperation,
 };
 use crate::core::handler;
+use crate::core::helpers;
 use crate::core::theme;
 use strum::IntoEnumIterator;
 
@@ -30,6 +31,7 @@ impl App {
             collection_window_list_state: ListState::default().with_selected(Some(1)),
             selected_tab: 0,
             selected_response_tab: 0,
+            current_operation: WindowOperation::Null,
         }
     }
 
@@ -91,11 +93,25 @@ impl App {
         self.character_index = 0;
     }
 
-    fn select_next(&mut self) {
-        self.collection_window_list_state.select_next();
+    fn prompt(&mut self, operation: WindowOperation) {
+        self.input_mode = InputMode::Editing;
+        self.input_strategy = InputStrategy::Prompt;
+
+        self.current_operation = operation;
     }
 
-    // update the right collection
+    fn execute_operation_on_selected_window(&mut self, operation: WindowOperation, promt: String) {
+        match self.focused_window {
+            FocusedWindow::Collections => match operation {
+                WindowOperation::Create => {
+                    handler::create_collection(promt).unwrap();
+                }
+                _ => todo!(),
+            },
+            _ => todo!(),
+        }
+    }
+
     fn select_collection_to_send_motion(&mut self, motion: WindowMotion) {
         match self.focused_window {
             FocusedWindow::Collections => match motion {
@@ -146,7 +162,11 @@ impl App {
     }
 
     fn submit_message(&mut self) {
-        handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
+        if self.input_strategy == InputStrategy::Prompt {
+            self.execute_operation_on_selected_window(self.current_operation, self.input.clone());
+        } else {
+            handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
+        }
         self.input.clear();
         self.reset_cursor();
         self.input_mode = InputMode::Normal;
@@ -188,6 +208,7 @@ impl App {
                         KeyCode::Char('l') => {
                             self.select_collection_to_send_motion(WindowMotion::Right)
                         }
+                        KeyCode::Char('a') => self.prompt(WindowOperation::Create),
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {

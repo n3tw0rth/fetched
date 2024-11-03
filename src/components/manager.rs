@@ -21,6 +21,6 @@ pub fn match_response_widget_with_opened_tab<'a>(
 ) -> Result<Paragraph<'a>, Box<dyn Error>> {
     match selected_tab {
         ResponseWidgetTabs::ResponseBody => widget_contents::response_body::render(),
-        ResponseWidgetTabs::ResponseQuery => widget_contents::response_body::render(),
+        ResponseWidgetTabs::ResponseHeader => widget_contents::response_header::render(),
     }
 }

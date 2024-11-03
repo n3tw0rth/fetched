@@ -11,9 +11,10 @@ pub enum InputMode {
 pub enum InputStrategy {
     Search,  // accessed using /
     Command, // accessed using :
+    Prompt,
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum FocusedWindow {
     Collections,
     Request,
@@ -28,6 +29,16 @@ pub enum WindowMotion {
     Right,
     Expand,
     Collapse,
+}
+
+#[derive(Clone, Copy)]
+pub enum WindowOperation {
+    Create,
+    Delete,
+    Rename,
+    Copy,
+    Paste,
+    Null,
 }
 
 pub enum WidgetType {
@@ -68,8 +79,8 @@ pub enum ResponseWidgetTabs {
     //Header,
     #[strum(to_string = "Body")]
     ResponseBody,
-    #[strum(to_string = "Query")]
-    ResponseQuery,
+    #[strum(to_string = "Header")]
+    ResponseHeader,
     //#[strum(to_string = "Authentication")]
     //Authentication,
 }

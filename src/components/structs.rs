@@ -1,6 +1,8 @@
 use ratatui::widgets::ListState;
 
-use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs};
+use crate::core::enums::{
+    FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, WindowOperation,
+};
 use crate::core::theme;
 
 //App holds the state of the application
@@ -23,6 +25,8 @@ pub struct App {
     pub selected_tab: usize,
     // response
     pub selected_response_tab: usize,
+    // operation
+    pub current_operation: WindowOperation,
 }
 
 pub struct RequestWidget {
