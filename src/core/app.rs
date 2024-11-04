@@ -104,34 +104,31 @@ impl App {
         self.current_operation = operation;
     }
 
-    fn get_selected_children(&self)->Result<String, Box<dyn std::error::Error>>{
-Ok(
-
-                                self.collections
-                                    .get(self.collection_window_list_state.selected().unwrap())
-                                    .unwrap()
-                                    .to_string()
-)
+    fn get_selected_children(&self) -> Result<String, Box<dyn std::error::Error>> {
+        Ok(self
+            .collections
+            .get(self.collection_window_list_state.selected().unwrap())
+            .unwrap()
+            .to_string())
     }
 
-    fn execute_operation_on_selected_window(&self,operation: WindowOperation){
- match self.focused_window{
-     FocusedWindow::Collections=>{
-         match operation{
-WindowOperation::Open=>{
-    if self.show_collection_children{
- handler::open_file(self.selected_collection.clone(),
- self.get_selected_children().unwrap()
-     ) 
-}else{
-todo!()
-    }
-}
-_=>todo!()
-         }
-     },
-     _=>todo!()
- }
+    fn execute_operation_on_selected_window(&self, operation: WindowOperation) {
+        match self.focused_window {
+            FocusedWindow::Collections => match operation {
+                WindowOperation::Open => {
+                    if self.show_collection_children {
+                        handler::open_file(
+                            self.selected_collection.clone(),
+                            self.get_selected_children().unwrap(),
+                        )
+                    } else {
+                        todo!()
+                    }
+                }
+                _ => todo!(),
+            },
+            _ => todo!(),
+        }
     }
 
     fn execute_operation_on_selected_window_with_promt(
@@ -303,7 +300,9 @@ _=>todo!()
                         }
                         KeyCode::Char('a') => self.prompt(WindowOperation::Create),
                         KeyCode::Char('d') => self.prompt(WindowOperation::Delete),
-                        KeyCode::Char('o') => self.execute_operation_on_selected_window(WindowOperation::Open),
+                        KeyCode::Char('o') => {
+                            self.execute_operation_on_selected_window(WindowOperation::Open)
+                        }
                         _ => {}
                     },
                     InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
