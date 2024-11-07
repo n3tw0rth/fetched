@@ -5,6 +5,7 @@ use ratatui::widgets::ListItem;
 use std::fmt;
 use std::fs::File;
 use std::fs::{self};
+use std::path::PathBuf;
 
 use crate::constants::Constants;
 
@@ -19,15 +20,17 @@ pub fn edit_event_handler(input_strategy: InputStrategy, input: String) {
                 println!("{0}", filename);
                 _ = File::create(filename);
             }
-            "q" => {
-                _ = std::process::Command::new("clear").status();
-                _ = terminal::disable_raw_mode();
-                crate::core::helpers::clear_logger();
-                std::process::exit(0x0100);
-            }
+            "q" => exit_app(),
             _ => {}
         }
     }
+}
+
+pub fn exit_app() {
+    _ = std::process::Command::new("clear").status();
+    _ = terminal::disable_raw_mode();
+    crate::core::helpers::clear_logger();
+    std::process::exit(0x0100);
 }
 
 pub fn create_config_folder() {
@@ -161,9 +164,14 @@ pub fn delete_collection_children(
     Ok(())
 }
 
-pub fn open_file(collection: String, children: String) {
-    todo!()
-    //_ = std::process::Command::new("nvim")
-    //    .arg(get_project_path().unwrap().join(collection).join(children))
-    //    .spawn();
+pub fn get_file_path(
+    collection: String,
+    children: String,
+) -> Result<String, Box<dyn std::error::Error>> {
+    Ok(get_project_path()?
+        .join(collection)
+        .join(children)
+        .to_str()
+        .unwrap()
+        .to_string())
 }

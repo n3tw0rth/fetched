@@ -7,6 +7,10 @@ use crate::core::enums::{
 use crate::core::handler;
 use crate::core::theme;
 use color_eyre::Result;
+use crossterm::event::{KeyEvent, KeyModifiers};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
+use crossterm::ExecutableCommand;
+use ratatui::backend::CrosstermBackend;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -15,7 +19,11 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 use std::error::Error;
+use std::io::stdout;
+use std::process::Command;
 use strum::IntoEnumIterator;
+
+type Terminal = ratatui::Terminal<CrosstermBackend<std::io::Stdout>>;
 
 impl App {
     pub fn new() -> Self {
@@ -112,18 +120,27 @@ impl App {
             .to_string())
     }
 
-    fn execute_operation_on_selected_window(&self, operation: WindowOperation) {
+    fn run_editor(&self,terminal: &mut Terminal,file: String) -> Result<()> {
+        stdout().execute(LeaveAlternateScreen)?;
+        disable_raw_mode()?;
+        Command::new("nvim").arg(file).status()?;
+        stdout().execute(EnterAlternateScreen)?;
+        enable_raw_mode()?;
+        terminal.clear()?;
+        Ok(())
+    }
+
+    fn execute_operation_on_selected_window(&self, operation: WindowOperation,terminal: Option<&mut Terminal>) {
         match self.focused_window {
             FocusedWindow::Collections => match operation {
                 WindowOperation::Open => {
                     if self.show_collection_children {
-                        handler::open_file(
+                       let file_path =          handler::get_file_path(
                             self.selected_collection.clone(),
                             self.get_selected_children().unwrap(),
-                        )
-                    } else {
-                        todo!()
-                    }
+                        ).unwrap();
+                        self.run_editor(&mut terminal.unwrap(),file_path).unwrap()
+                    } 
                 }
                 _ => todo!(),
             },
@@ -269,6 +286,12 @@ impl App {
             if let Event::Key(key) = event::read()? {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
+                        KeyCode::Char('q') => {
+                            if key.modifiers == KeyModifiers::CONTROL
+                            {
+                                super::handler::exit_app();
+                            }
+                        }
                         KeyCode::Char(':') => {
                             self.input_strategy = InputStrategy::Command;
                             self.input_mode = InputMode::Editing;
@@ -301,7 +324,7 @@ impl App {
                         KeyCode::Char('a') => self.prompt(WindowOperation::Create),
                         KeyCode::Char('d') => self.prompt(WindowOperation::Delete),
                         KeyCode::Char('o') => {
-                            self.execute_operation_on_selected_window(WindowOperation::Open)
+                            self.execute_operation_on_selected_window(WindowOperation::Open, Some(&mut terminal))
                         }
                         _ => {}
                     },
