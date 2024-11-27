@@ -77,29 +77,39 @@ pub fn list_collections() -> Vec<String> {
 }
 
 pub fn list_collection_children(collection_name: String) -> Vec<String> {
-    fs::read_dir(std::env::current_dir().unwrap())
-        .unwrap()
-        .filter_map(|entry| {
-            let entry = entry.ok()?; // Handle errors with filter_map
-            let metadata = entry.metadata().ok()?;
-            if metadata.is_file() {
-                Some(entry.path()) // Collect path if it's a file
-            } else {
-                None
-            }
-        })
-        .enumerate()
-        .map(|entry| {
-            entry
-                .1
-                .display()
-                .to_string()
-                .strip_prefix(std::env::current_dir().unwrap().to_str().unwrap())
-                .unwrap()
-                .to_string()
-                .replace("/", "")
-        })
-        .collect()
+    fs::read_dir(
+        std::env::current_dir()
+            .unwrap()
+            .join(collection_name.clone()),
+    )
+    .unwrap()
+    .filter_map(|entry| {
+        let entry = entry.ok()?; // Handle errors with filter_map
+        let metadata = entry.metadata().ok()?;
+        if metadata.is_file() {
+            Some(entry.path()) // Collect path if it's a file
+        } else {
+            None
+        }
+    })
+    .enumerate()
+    .map(|entry| {
+        entry
+            .1
+            .display()
+            .to_string()
+            .strip_prefix(
+                std::env::current_dir()
+                    .unwrap()
+                    .join(collection_name.clone())
+                    .to_str()
+                    .unwrap(),
+            )
+            .unwrap()
+            .to_string()
+            .replace("/", "")
+    })
+    .collect()
 }
 
 pub fn get_project_path() -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
