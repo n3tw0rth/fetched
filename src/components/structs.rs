@@ -1,12 +1,15 @@
+use ratatui::layout::Rect;
 use ratatui::widgets::{ListItem, ListState};
 
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, WindowOperation,
 };
 use crate::core::theme;
+use std::collections::HashMap;
 
 //App holds the state of the application
 pub struct App {
+    pub rectangles: HashMap<String, Rect>,
     pub theme: theme::Config,
     // Current value of the input box
     pub input: String,

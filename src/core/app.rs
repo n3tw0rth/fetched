@@ -1,13 +1,13 @@
-use crate::components::manager;
+use crate::components::{manager,drawable};
 use crate::components::structs::App;
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
     WidgetType, WindowMotion, WindowOperation,
 };
-use crate::core::handler;
+use crate::core::{handler,helpers};
 use crate::core::theme;
 use color_eyre::Result;
-use crossterm::event::{KeyEvent, KeyModifiers};
+use crossterm::event::KeyModifiers;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
@@ -22,12 +22,14 @@ use std::error::Error;
 use std::io::stdout;
 use std::process::Command;
 use strum::IntoEnumIterator;
+use std::collections::HashMap;
 
 type Terminal = ratatui::Terminal<CrosstermBackend<std::io::Stdout>>;
 
 impl App {
     pub fn new() -> Self {
         Self {
+            rectangles: HashMap::new(),
             theme: theme::get_theme().unwrap(),
             input: String::new(),
             input_mode: InputMode::Normal,
@@ -106,10 +108,14 @@ impl App {
     }
 
     fn prompt(&mut self, operation: WindowOperation) {
-        self.input_mode = InputMode::Editing;
+        self.input_mode = InputMode::Control;
         self.input_strategy = InputStrategy::Prompt;
 
         self.current_operation = operation;
+    }
+
+    fn get_rectangle(&self, key: String) -> Rect {
+        *self.rectangles.get_key_value(&key).unwrap().1
     }
 
     fn get_selected_children(&self) -> Result<String, Box<dyn std::error::Error>> {
@@ -130,7 +136,8 @@ impl App {
         Ok(())
     }
 
-    fn execute_operation_on_selected_window(&self, operation: WindowOperation,terminal: Option<&mut Terminal>) {
+    fn execute_operation_on_selected_window(&mut self, operation: WindowOperation,terminal: Option<&mut Terminal>) {
+        self.current_operation = operation;
         match self.focused_window {
             FocusedWindow::Collections => match operation {
                 WindowOperation::Open => {
@@ -144,6 +151,12 @@ impl App {
                 }
                 _ => todo!(),
             },
+            FocusedWindow::Request => match operation{
+                WindowOperation::Edit => {
+                    self.input_mode =  InputMode::Insert
+                }
+                _ => todo!()
+            }
             _ => todo!(),
         }
     }
@@ -284,6 +297,7 @@ impl App {
             terminal.draw(|frame| self.draw(frame))?;
 
             if let Event::Key(key) = event::read()? {
+                // key bindings
                 match self.input_mode {
                     InputMode::Normal => match key.code {
                         KeyCode::Char('q') => {
@@ -294,11 +308,11 @@ impl App {
                         }
                         KeyCode::Char(':') => {
                             self.input_strategy = InputStrategy::Command;
-                            self.input_mode = InputMode::Editing;
+                            self.input_mode = InputMode::Control;
                         }
                         KeyCode::Char('/') => {
                             self.input_strategy = InputStrategy::Search;
-                            self.input_mode = InputMode::Editing;
+                            self.input_mode = InputMode::Control;
                         }
                         KeyCode::Char('1') => {
                             self.focused_window = FocusedWindow::Collections;
@@ -326,9 +340,12 @@ impl App {
                         KeyCode::Char('o') => {
                             self.execute_operation_on_selected_window(WindowOperation::Open, Some(&mut terminal))
                         }
+                        KeyCode::Char('i') => {
+                            self.execute_operation_on_selected_window(WindowOperation::Edit, None)
+                        }
                         _ => {}
                     },
-                    InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
+                    InputMode::Control if key.kind == KeyEventKind::Press => match key.code {
                         KeyCode::Enter => self.submit_message(),
                         KeyCode::Char(to_insert) => self.enter_char(to_insert),
                         KeyCode::Backspace => self.delete_char(),
@@ -337,7 +354,13 @@ impl App {
                         KeyCode::Esc => self.input_mode = InputMode::Normal,
                         _ => {}
                     },
-                    InputMode::Editing => {}
+                    InputMode::Insert if key.kind == KeyEventKind::Press => match key.code {
+                        KeyCode::Esc => self.input_mode = InputMode::Normal,
+                        _ => {}
+                    }
+                    InputMode::Control => {}
+                    InputMode::Insert => {}
+
                 }
             }
         }
@@ -370,7 +393,7 @@ impl App {
             Constraint::Min(1),
         ])
         .areas(frame.area());
-        if self.input_mode == InputMode::Editing {
+        if self.input_mode == InputMode::Control {
             vertical_layout = Layout::vertical([
                 Constraint::Length(3),
                 Constraint::Length(3),
@@ -378,17 +401,23 @@ impl App {
             ])
             .areas(frame.area());
         }
+   
+        self.rectangles.insert("v0".into(),*vertical_layout.get(0).unwrap());
+        self.rectangles.insert("v1".into(),*vertical_layout.get(1).unwrap());
+        self.rectangles.insert("v2".into(),*vertical_layout.get(2).unwrap());
+
         let input = Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
                 InputMode::Normal => Style::default(),
-                InputMode::Editing => {
+                InputMode::Control => {
                     Style::default().fg(Color::from_u32(self.theme.focus.foreground))
                 }
+                _ => { Style::default()}
             })
             .block(Block::bordered().title(self.decide_input_title().unwrap()));
         // render the input field only in editing mode
-        if self.input_mode == InputMode::Editing {
-            frame.render_widget(input, *vertical_layout.get(0).unwrap());
+        if self.input_mode == InputMode::Control {
+            frame.render_widget(input,self.get_rectangle("v0".into()))
         }
         match self.input_mode {
             // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
@@ -396,36 +425,45 @@ impl App {
             // Make the cursor visible and ask ratatui to put it at the specified coordinates after
             // rendering
             #[allow(clippy::cast_possible_truncation)]
-            InputMode::Editing => frame.set_cursor_position(Position::new(
+            InputMode::Control => frame.set_cursor_position(Position::new(
                 // Draw the cursor at the current position in the input field.
                 // This position is can be controlled via the left and right arrow key
-                vertical_layout.get(0).unwrap().x + self.character_index as u16 + 1,
+                self.get_rectangle("v0".into()).x + self.character_index as u16 + 1,
                 // Move one line down, from the border to the input line
-                vertical_layout.get(0).unwrap().y + 1,
+               self.get_rectangle("v0".into()).y + 1,
             )),
+            _ => {}
         }
 
-        // 1st horizontal layout
-        // split the 2nd vertical layout horizontally
+        // 1st horizontal layout split the 2nd vertical layout horizontally 
         let horizontal_layout: [Rect; 2] =
             Layout::horizontal([Constraint::Length(8), Constraint::Min(1)])
                 .areas(*vertical_layout.get(1).unwrap());
+
+        self.rectangles.insert("h0".into(),*horizontal_layout.get(0).unwrap());
+        self.rectangles.insert("h1".into(),*horizontal_layout.get(1).unwrap());
+
         // http method widget
         let http_method_widget = Paragraph::new("POST")
             .style(Style::default().add_modifier(Modifier::BOLD))
             .alignment(Alignment::Center)
             .block(Block::bordered().style(Color::from_u32(self.theme.focus.border)));
-        frame.render_widget(http_method_widget, *horizontal_layout.get(0).unwrap());
+        frame.render_widget(http_method_widget, self.get_rectangle("h0".into()));
         // url
         let url_widget = Paragraph::new("https://somewhere.com/api/v1/users")
             .block(Block::bordered().style(Color::White));
-        frame.render_widget(url_widget, *horizontal_layout.get(1).unwrap());
+        frame.render_widget(url_widget, self.get_rectangle("h1".into()));
 
         // 2st horizontal layout
         // split the 3nd vertical layout horizontally
         let horizontal_layout_2: [Rect; 2] =
             Layout::horizontal([Constraint::Length(50), Constraint::Min(50)])
-                .areas(*vertical_layout.get(2).unwrap());
+                .areas(self.get_rectangle("v2".into()));
+
+        // sb -> sub-horizontal
+        self.rectangles.insert("sh0".into(), *horizontal_layout_2.get(0).unwrap());
+        self.rectangles.insert("sh1".into(), *horizontal_layout_2.get(1).unwrap());
+
         // collections window
         let collections_widget = List::new(
             self.collections
@@ -465,13 +503,16 @@ impl App {
         );
         frame.render_stateful_widget(
             collections_widget,
-            *horizontal_layout_2.get(0).unwrap(),
+            self.get_rectangle("sh0".into()),
             &mut self.collection_window_list_state,
         );
 
         let sub_vertical_layout_right: [Rect; 2] =
             Layout::vertical([Constraint::Length(50), Constraint::Min(30)])
-                .areas(*horizontal_layout_2.get(1).unwrap());
+                .areas(self.get_rectangle("sh1".into()));
+
+        self.rectangles.insert("sv0".into(),*sub_vertical_layout_right.get(0).unwrap());
+        self.rectangles.insert("sv1".into(),*sub_vertical_layout_right.get(1).unwrap());
 
         //
         //
@@ -506,9 +547,9 @@ impl App {
                 .unwrap(),
             );
 
-        let request_widget_parent_container = sub_vertical_layout_right.get(0).unwrap();
+        let request_widget_parent_container = self.get_rectangle("sv0".into());
 
-        frame.render_widget(requests_widget, *request_widget_parent_container);
+        frame.render_widget(requests_widget, request_widget_parent_container);
 
         // select the right content to display using the select tab
         let current_request_widget_content = manager::match_request_widget_with_opened_tab(
@@ -521,13 +562,27 @@ impl App {
             request_widget_parent_container.x + 1,
             request_widget_parent_container.y + 2,
             request_widget_parent_container.width - 2,
-            request_widget_parent_container.height,
+            request_widget_parent_container.height - 2,
         );
 
         frame.render_widget(
             current_request_widget_content,
             request_widget_child_container,
         );
+
+
+        // render request component sub components bound to operations
+        match self.focused_window {
+            FocusedWindow::Request =>{
+                match self.current_operation {
+                    WindowOperation::Edit => {
+                        drawable::editheader::draw(frame,request_widget_child_container)
+                    }
+                    _ => {}
+                }
+            }
+             _ => {}
+        }
 
         //
         //
@@ -562,9 +617,9 @@ impl App {
                 .unwrap(),
             );
 
-        let response_widget_parent_container = sub_vertical_layout_right.get(1).unwrap();
+        let response_widget_parent_container = self.get_rectangle("sv1".into());
 
-        frame.render_widget(response_widget, *response_widget_parent_container);
+        frame.render_widget(response_widget, response_widget_parent_container);
 
         // select the right content to display using the select tab
         let current_response_widget_content = manager::match_response_widget_with_opened_tab(

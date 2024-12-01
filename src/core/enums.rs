@@ -4,7 +4,8 @@ use strum_macros::{Display, EnumIter, FromRepr};
 #[derive(Clone, PartialEq)]
 pub enum InputMode {
     Normal,
-    Editing,
+    Insert,
+    Control,
 }
 
 #[derive(Clone, PartialEq)]
@@ -36,6 +37,7 @@ pub enum WindowOperation {
     Create,
     Delete,
     Rename,
+    Edit,
     Open,
     Null,
 }
@@ -56,6 +58,23 @@ pub enum ThemeAttribute {
     Background,
     Highlight,
     Border,
+}
+
+pub enum ContainerPositions {
+    Top,
+    Bottom,
+    Middle,
+    Center,
+    TopCenter,
+    BottomCenter,
+    MiddleCenter,
+    CenterCenter,
+    Full,
+}
+
+pub enum LayoutOrientation {
+    Vertical,
+    Horizontal,
 }
 
 // widgets

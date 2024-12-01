@@ -1,19 +1,6 @@
-use ratatui::style::Style;
-use ratatui::widgets::Widget;
-use ratatui::{style::Color, widgets::Block};
+use ratatui::layout::Rect;
 
-use super::enums::FocusedWindow;
-pub fn define_window_border_style<'a>(focused: bool) -> anyhow::Result<Block<'a>> {
-    if focused {
-        Ok(Block::bordered()
-            .title_alignment(ratatui::layout::Alignment::Center)
-            .style(Color::Blue))
-    } else {
-        Ok(Block::bordered()
-            .title_alignment(ratatui::layout::Alignment::Center)
-            .style(Color::Gray))
-    }
-}
+use crate::core::enums::ContainerPositions;
 
 pub fn logger(msg: String) {
     use std::fs::OpenOptions;
@@ -42,4 +29,16 @@ pub fn clear_logger() {
         .unwrap();
 
     writeln!(file, "{}", "").unwrap();
+}
+
+// get the desired rectangle
+// TODO: add orientation
+pub fn find_position(position: ContainerPositions, ratio: f32, area: Rect) -> Rect {
+    let height = (area.height as f32 * ratio) as u16;
+    match position {
+        ContainerPositions::Bottom => {
+            Rect::new(area.left(), area.bottom() - height, area.width, height)
+        }
+        _ => area,
+    }
 }
