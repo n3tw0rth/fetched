@@ -31,6 +31,16 @@ pub fn clear_logger() {
     writeln!(file, "{}", "").unwrap();
 }
 
+pub fn get_inner(rect: Rect, left: u16, top: u16, right: u16, bottom: u16) -> Rect {
+    let padded_rect = Rect::new(
+        rect.x + left,
+        rect.y + top,
+        rect.width - right,
+        rect.height - bottom,
+    );
+    padded_rect
+}
+
 // get the desired rectangle
 // TODO: add orientation
 pub fn find_position(position: ContainerPositions, ratio: f32, area: Rect) -> Rect {

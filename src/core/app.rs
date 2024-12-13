@@ -11,6 +11,7 @@ use crossterm::event::KeyModifiers;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
+use ratatui::layout::{Margin, Offset};
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -558,25 +559,22 @@ impl App {
         .unwrap();
 
         // adjust the child Rec based on the parent to load request content
-        let request_widget_child_container = Rect::new(
-            request_widget_parent_container.x + 1,
-            request_widget_parent_container.y + 2,
-            request_widget_parent_container.width - 2,
-            request_widget_parent_container.height - 2,
-        );
+        let request_widget_child_containers :[Rect;2]= Layout::vertical([Constraint::Min(1),Constraint::Length(4)]).areas(request_widget_parent_container);
+        let request_widget_child_container_content = helpers::get_inner(*request_widget_child_containers.get(0).unwrap(),1,2,2,1);
+        let request_widget_child_container_input = helpers::get_inner(*request_widget_child_containers.get(1).unwrap(),1,0,2,1);
 
         frame.render_widget(
             current_request_widget_content,
-            request_widget_child_container,
+            request_widget_child_container_content,
         );
-
 
         // render request component sub components bound to operations
         match self.focused_window {
             FocusedWindow::Request =>{
                 match self.current_operation {
                     WindowOperation::Edit => {
-                        drawable::editheader::draw(frame,request_widget_child_container)
+                        if self.input_mode == InputMode::Insert
+                        {drawable::editheader::draw(frame,request_widget_child_container_input)}
                     }
                     _ => {}
                 }
@@ -630,12 +628,7 @@ impl App {
         .unwrap();
 
         // adjust the child Rec based on the parent to load request content
-        let response_widget_child_container = Rect::new(
-            response_widget_parent_container.x + 1,
-            response_widget_parent_container.y + 2,
-            response_widget_parent_container.width - 2,
-            response_widget_parent_container.height,
-        );
+        let response_widget_child_container = response_widget_parent_container.inner(Margin::new(1,2));
 
         frame.render_widget(
             current_response_widget_content,
