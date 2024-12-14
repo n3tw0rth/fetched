@@ -288,6 +288,11 @@ impl App {
         } else {
             handler::edit_event_handler(self.input_strategy.clone(), self.input.clone());
         }
+        //match self.input_strategy{
+        //    InputStrategy::Search => {}
+        //    InputStrategy::Prompt =>{}
+        //    InputStrategy::Command =>{}
+        //}
         self.input.clear();
         self.reset_cursor();
         self.input_mode = InputMode::Normal;
@@ -352,11 +357,19 @@ impl App {
                         KeyCode::Backspace => self.delete_char(),
                         KeyCode::Left => self.move_cursor_left(),
                         KeyCode::Right => self.move_cursor_right(),
-                        KeyCode::Esc => self.input_mode = InputMode::Normal,
+                        KeyCode::Esc => {
+                            self.input_mode = InputMode::Normal;
+                            self.reset_input();
+                        }
                         _ => {}
                     },
                     InputMode::Insert if key.kind == KeyEventKind::Press => match key.code {
-                        KeyCode::Esc => self.input_mode = InputMode::Normal,
+                        // register keypresses in insert mode too
+                        KeyCode::Char(to_insert) => self.enter_char(to_insert),
+                        KeyCode::Esc => {
+                            self.input_mode = InputMode::Normal;
+                            self.reset_input();
+                        },
                         _ => {}
                     }
                     InputMode::Control => {}
@@ -365,6 +378,11 @@ impl App {
                 }
             }
         }
+    }
+
+    fn reset_input(&mut self){
+                            self.input.clear();
+                            self.delete_char();
     }
 
     fn decide_input_title(&self) -> Result<String, Box<dyn Error>> {
@@ -574,7 +592,7 @@ impl App {
                 match self.current_operation {
                     WindowOperation::Edit => {
                         if self.input_mode == InputMode::Insert
-                        {drawable::editheader::draw(frame,request_widget_child_container_input)}
+                        {drawable::editheader::draw(frame,request_widget_child_container_input,&self.input)}
                     }
                     _ => {}
                 }
