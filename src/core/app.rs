@@ -11,7 +11,7 @@ use crossterm::event::KeyModifiers;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
-use ratatui::layout::{Margin, Offset};
+use ratatui::layout::Margin;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -31,6 +31,7 @@ impl App {
     pub fn new() -> Self {
         Self {
             rectangles: HashMap::new(),
+            persisted_values: HashMap::new(),
             theme: theme::get_theme().unwrap(),
             input: String::new(),
             input_mode: InputMode::Normal,
@@ -47,6 +48,7 @@ impl App {
             //response tabs
             selected_response_tab: 0,
             current_operation: WindowOperation::Null,
+            sub_focus_element: 0
         }
     }
 
@@ -366,10 +368,14 @@ impl App {
                     InputMode::Insert if key.kind == KeyEventKind::Press => match key.code {
                         // register keypresses in insert mode too
                         KeyCode::Char(to_insert) => self.enter_char(to_insert),
+                        KeyCode::Backspace => self.delete_char(),
                         KeyCode::Esc => {
                             self.input_mode = InputMode::Normal;
                             self.reset_input();
                         },
+                        KeyCode::Tab =>{
+                            self.handle_tab_key()
+                        }
                         _ => {}
                     }
                     InputMode::Control => {}
@@ -380,9 +386,31 @@ impl App {
         }
     }
 
+    fn handle_tab_key(&mut self){
+        match self.input_mode{
+            InputMode::Insert =>{
+                match  self.focused_window{
+                    FocusedWindow::Request=>{
+                        match self.current_operation{
+                            WindowOperation::Edit=>{
+                                    self.sub_focus_element += 1;
+                                    if self.sub_focus_element > 2{
+                                        self.sub_focus_element = 0
+                                    }
+                            }
+                            _=>{}
+                        }
+                    }
+                    _=> {}
+                }
+            }
+            _ => {}
+        } 
+    }
+
     fn reset_input(&mut self){
-                            self.input.clear();
-                            self.delete_char();
+        self.input.clear();
+        self.delete_char();
     }
 
     fn decide_input_title(&self) -> Result<String, Box<dyn Error>> {
@@ -469,7 +497,7 @@ impl App {
             .block(Block::bordered().style(Color::from_u32(self.theme.focus.border)));
         frame.render_widget(http_method_widget, self.get_rectangle("h0".into()));
         // url
-        let url_widget = Paragraph::new("https://somewhere.com/api/v1/users")
+        let url_widget = Paragraph::new(self.persisted_values.get("request_header_name").or(Some(&"value".to_string())).unwrap().clone())
             .block(Block::bordered().style(Color::White));
         frame.render_widget(url_widget, self.get_rectangle("h1".into()));
 
@@ -592,7 +620,7 @@ impl App {
                 match self.current_operation {
                     WindowOperation::Edit => {
                         if self.input_mode == InputMode::Insert
-                        {drawable::editheader::draw(frame,request_widget_child_container_input,&self.input)}
+                        {drawable::editheader::draw(frame,request_widget_child_container_input,self.sub_focus_element,&mut self.input)}
                     }
                     _ => {}
                 }

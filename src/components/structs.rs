@@ -10,6 +10,7 @@ use std::collections::HashMap;
 //App holds the state of the application
 pub struct App {
     pub rectangles: HashMap<String, Rect>,
+    pub persisted_values: HashMap<String, String>,
     pub theme: theme::Config,
     // Current value of the input box
     pub input: String,
@@ -33,6 +34,8 @@ pub struct App {
     pub selected_response_tab: usize,
     // operation
     pub current_operation: WindowOperation,
+    // common attr to decide which element to focus on
+    pub sub_focus_element: u8,
 }
 
 pub struct RequestWidget {
