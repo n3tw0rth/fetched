@@ -5,7 +5,7 @@ use std::fs::{self};
 
 use crate::constants;
 
-pub fn edit_event_handler(input_strategy: InputStrategy, input: String) {
+pub fn event_handler(input_strategy: InputStrategy, input: String) {
     let cmds: Vec<_> = input.split(' ').collect();
     if input_strategy == InputStrategy::Command {
         match *cmds.get(0).unwrap() {

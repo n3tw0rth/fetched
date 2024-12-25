@@ -66,3 +66,8 @@ pub fn match_color_theme_for_widgets(
         },
     }
 }
+
+// WIP
+//
+// set the border when input elements are focused
+pub fn set_border_color(is_focused: boolean) ->  {}

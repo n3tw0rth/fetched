@@ -10,7 +10,7 @@ use std::collections::HashMap;
 //App holds the state of the application
 pub struct App {
     pub rectangles: HashMap<String, Rect>,
-    pub persisted_values: HashMap<String, String>,
+    pub input_buffer: HashMap<u8, String>,
     pub theme: theme::Config,
     // Current value of the input box
     pub input: String,
