@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::Color;
 use ratatui::widgets::{Block, Paragraph};
 use ratatui::Frame;
 
 use crate::core::helpers;
+use crate::core::theme;
 
 pub fn draw(frame: &mut Frame, area: Rect, selection: u8, input_buffer: &mut HashMap<u8, String>) {
     let mut header_name = "".to_string();
@@ -22,19 +23,19 @@ pub fn draw(frame: &mut Frame, area: Rect, selection: u8, input_buffer: &mut Has
     header_value.push_str(input_buffer.get(&1).unwrap_or(&"".to_string()));
 
     frame.render_widget(
-        Paragraph::new(header_name).block(Block::bordered().border_style(if selection == 0 {
-            Color::Blue
-        } else {
-            Color::Gray
-        })),
+        //Paragraph::new(header_name).block(theme::set_border_color(selection == 0)),
+        Paragraph::new(header_name).block(theme::set_input_block(selection == 0)),
         *fields.get(0).unwrap(),
     );
     frame.render_widget(
-        Paragraph::new(header_value).block(Block::bordered()),
+        Paragraph::new(header_value).block(theme::set_input_block(selection == 1)),
         *fields.get(1).unwrap(),
     );
     frame.render_widget(
-        Paragraph::new("Add").block(Block::bordered()),
+        Paragraph::new("Add")
+            .alignment(Alignment::Center)
+            .block(theme::set_button_block(selection == 2)),
+        //.style(theme::set_button_style(selection == 2)),
         *fields.get(2).unwrap(),
     );
 }

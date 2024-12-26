@@ -1,4 +1,5 @@
 use crate::components::structs::App;
+use crate::components::widgets;
 use crate::components::{drawable, manager};
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
@@ -658,53 +659,14 @@ impl App {
         // Response Widget
         //
         //
-        let response_widget = Tabs::new(ResponseWidgetTabs::iter().map(|tab| tab.to_string()))
-            .select(self.selected_response_tab)
-            .block(
-                theme::set_border_style(
-                    self.focused_window == FocusedWindow::Response,
-                    self.theme.clone(),
-                )
-                .unwrap()
-                .title("[3] Response"),
-            )
-            .divider("")
-            .style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Normal,
-                    WidgetType::Tab,
-                )
-                .unwrap(),
-            )
-            .highlight_style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Focus,
-                    WidgetType::Tab,
-                )
-                .unwrap(),
-            );
-
         let response_widget_parent_container = self.get_rectangle("sv1".into());
 
-        frame.render_widget(response_widget, response_widget_parent_container);
-
-        // select the right content to display using the select tab
-        let current_response_widget_content = manager::match_response_widget_with_opened_tab(
-            ResponseWidgetTabs::iter()
-                .nth(self.selected_response_tab)
-                .unwrap(),
-        )
-        .unwrap();
-
-        // adjust the child Rec based on the parent to load request content
-        let response_widget_child_container =
-            response_widget_parent_container.inner(Margin::new(1, 2));
-
-        frame.render_widget(
-            current_response_widget_content,
-            response_widget_child_container,
+        widgets::response::draw_response_widget(
+            &self.theme,
+            self.selected_response_tab,
+            frame,
+            &self.focused_window,
+            response_widget_parent_container,
         );
     }
 }

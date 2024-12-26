@@ -2,10 +2,14 @@
 foreground = 0x00FF9C73
 background = 0x001E201E
 highlight = 0x007AB2D3
-border  = 0x007ED4AD
+border  = 0x00FF9C73
 
 [normal]
 foreground = 0x00B7B7B7
 background = 0x00577B8D
 highlight = 0x00DFF2EB
-border  = 0x004CC9FE
+border  = 0x00EFF3EA
+
+
+
+# background = #1E201E
