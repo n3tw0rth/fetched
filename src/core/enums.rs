@@ -77,6 +77,15 @@ pub enum LayoutOrientation {
     Horizontal,
 }
 
+#[derive(Default, Debug, Clone, Copy, Display, FromRepr, EnumIter)]
+pub enum LogTypes {
+    #[default]
+    #[strum(to_string = "Info")]
+    Info,
+    #[strum(to_string = "Error")]
+    Error,
+}
+
 // widgets
 #[derive(Default, Debug, Clone, Copy, Display, FromRepr, EnumIter)]
 pub enum RequestWidgetTabs {

@@ -1,3 +1,23 @@
 {
-  "url": "{{$BASE_URL}}"
+  'method': 'POST',
+  'url': 'https://example.com/api/resource',
+  'headers': {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer some-token',
+    'User-Agent': 'CustomClient/1.0'
+  },
+  'query_parameters': {
+    'search': 'example',
+    'page': '2'
+  },
+  'body_type': 'json',
+  'body': null,
+  'options':{
+    'validate_ssl': true,
+    'follow_redirect': true,
+    'attach_cookies': true,
+    'proxy' : 'https://user:password@localhost:1080',
+    'timeout': 0.5
+  },
+  'metadata': {}
 }

@@ -1,10 +1,10 @@
-use ratatui::layout::Rect;
-
 use crate::core::enums::ContainerPositions;
+use ratatui::layout::Rect;
+use std::fmt::Debug;
 
-pub fn logger(msg: String) {
+pub fn logger<T: Debug>(msg: T) {
     use std::fs::OpenOptions;
-    use std::io::{self, Write};
+    use std::io::Write;
 
     // Open the file in write mode (create if not exists).
     let mut file = OpenOptions::new()
@@ -13,13 +13,13 @@ pub fn logger(msg: String) {
         .create(true)
         .open("runtime.log")
         .unwrap();
-
-    writeln!(file, "{}", msg).unwrap();
+    let formated_text = format!("{:?}", msg);
+    writeln!(file, "{}", formated_text).unwrap();
 }
 
 pub fn clear_logger() {
     use std::fs::OpenOptions;
-    use std::io::{self, Write};
+    use std::io::Write;
 
     // Open the file in write mode (create if not exists).
     let mut file = OpenOptions::new()

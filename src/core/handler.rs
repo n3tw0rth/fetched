@@ -2,6 +2,7 @@ use crate::core::enums::InputStrategy;
 use crossterm::terminal;
 use dirs::{config_dir, home_dir};
 use std::fs::{self};
+use std::io::prelude::*;
 
 use crate::constants;
 
@@ -121,16 +122,40 @@ pub fn create_collection(collection_name: String) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
-pub fn create_collection_children(
-    collection_name: String,
+pub fn create_request(
+    collection_name: &String,
     children: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    _ = fs::File::create(
+    let file = fs::File::create(
         std::env::current_dir()
             .unwrap()
             .join(collection_name)
             .join(children),
     );
+    let file_content = br#"{
+  "method": "POST",
+  "url": "https://example.com/api/resource",
+  "headers": {
+    "Content-Type": "application/json",
+  },
+  "query_parameters": {
+    "search": "example",
+    "page": "2"
+  },
+  "body_type": "json",
+  "body": null,
+  "options":{
+    "validate_ssl": true,
+    "follow_redirect": true,
+    "attach_cookies": true,
+    "proxy" : "",
+    "timeout": 0.5
+  },
+  "metadata": {}
+}
+    "#;
+    _ = file.unwrap().write_all(file_content);
+
     Ok(())
 }
 

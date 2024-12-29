@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
-use ratatui::style::Color;
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::core::helpers;
@@ -34,8 +33,8 @@ pub fn draw(frame: &mut Frame, area: Rect, selection: u8, input_buffer: &mut Has
     frame.render_widget(
         Paragraph::new("Add")
             .alignment(Alignment::Center)
-            .block(theme::set_button_block(selection == 2)),
-        //.style(theme::set_button_style(selection == 2)),
+            .block(theme::set_button_block(selection == 2))
+            .style(theme::set_button_style(selection == 2)),
         *fields.get(2).unwrap(),
     );
 }

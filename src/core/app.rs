@@ -1,10 +1,10 @@
 use crate::components::structs::App;
-use crate::components::widgets;
-use crate::components::{drawable, manager};
+use crate::components::{drawable, events, manager, widgets};
 use crate::core::enums::{
-    FocusedWindow, InputMode, InputStrategy, RequestWidgetTabs, ResponseWidgetTabs, ThemeState,
-    WidgetType, WindowMotion, WindowOperation,
+    FocusedWindow, InputMode, InputStrategy, LogTypes, RequestWidgetTabs, ResponseWidgetTabs,
+    ThemeState, WidgetType, WindowMotion, WindowOperation,
 };
+use crate::core::request_parser;
 use crate::core::theme;
 use crate::core::{handler, helpers};
 use color_eyre::Result;
@@ -14,7 +14,8 @@ use crossterm::terminal::{
 };
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
-use ratatui::layout::Margin;
+use ratatui::layout::Flex;
+use ratatui::widgets::Clear;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -25,6 +26,7 @@ use ratatui::{
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::stdout;
+use std::path::PathBuf;
 use std::process::Command;
 use strum::IntoEnumIterator;
 
@@ -33,6 +35,7 @@ type Terminal = ratatui::Terminal<CrosstermBackend<std::io::Stdout>>;
 impl App {
     pub fn new() -> Self {
         Self {
+            request_data: serde_json::Value::Null,
             rectangles: HashMap::new(),
             input_buffer: HashMap::new(),
             theme: theme::get_theme().unwrap(),
@@ -45,6 +48,7 @@ impl App {
             collections: handler::list_collections(),
             collection_window_list_state: ListState::default().with_selected(Some(1)),
             selected_collection: "".to_string(),
+            selected_request: "".to_string(),
             show_collection_children: false,
             // request tabs
             selected_tab: 0,
@@ -52,6 +56,9 @@ impl App {
             selected_response_tab: 0,
             current_operation: WindowOperation::Null,
             sub_focus_element: 0,
+            is_show_popup: false,
+            popup_msg: "".to_string(),
+            popup_type: LogTypes::Info,
         }
     }
 
@@ -164,13 +171,13 @@ impl App {
                         self.run_editor(&mut terminal.unwrap(), file_path).unwrap()
                     }
                 }
-                _ => todo!(),
+                _ => {}
             },
             FocusedWindow::Request => match operation {
                 WindowOperation::Edit => self.input_mode = InputMode::Insert,
-                _ => todo!(),
+                _ => {}
             },
-            _ => todo!(),
+            _ => {}
         }
     }
 
@@ -183,8 +190,7 @@ impl App {
             FocusedWindow::Collections => match operation {
                 WindowOperation::Create => {
                     if self.show_collection_children {
-                        handler::create_collection_children(self.selected_collection.clone(), promt)
-                            .unwrap()
+                        handler::create_request(&self.selected_collection, promt).unwrap()
                     } else {
                         handler::create_collection(promt).unwrap();
                     }
@@ -219,6 +225,21 @@ impl App {
         } else {
             self.collections = handler::list_collections()
         }
+    }
+
+    fn get_request_file_path(&self) -> anyhow::Result<PathBuf> {
+        let path = std::env::current_dir()
+            .unwrap()
+            .join(&self.selected_collection)
+            .join(&self.selected_request);
+        Ok(path)
+    }
+
+    fn refresh_request_data(&mut self) {
+        let json_data = request_parser::read_json_file(&self.get_request_file_path().unwrap());
+        self.request_data = json_data.unwrap();
+        self.current_operation = WindowOperation::Null;
+        self.input_buffer.clear();
     }
 
     fn select_collection_to_send_motion(&mut self, motion: WindowMotion) {
@@ -315,7 +336,7 @@ impl App {
             terminal.draw(|frame| self.draw(frame))?;
 
             if let Event::Key(key) = event::read()? {
-                // key bindings
+                // keybindings
                 match self.input_mode {
                     InputMode::Normal => match key.code {
                         KeyCode::Char('c') => {
@@ -370,6 +391,7 @@ impl App {
                         KeyCode::Left => self.move_cursor_left(),
                         KeyCode::Right => self.move_cursor_right(),
                         KeyCode::Esc => {
+                            self.is_show_popup = false;
                             self.input_mode = InputMode::Normal;
                             self.reset_input();
                         }
@@ -380,16 +402,66 @@ impl App {
                         KeyCode::Char(to_insert) => self.enter_char(to_insert),
                         KeyCode::Backspace => self.delete_char(),
                         KeyCode::Esc => {
+                            self.is_show_popup = false;
                             self.input_mode = InputMode::Normal;
                             self.reset_input();
                         }
                         KeyCode::Tab => self.handle_tab_key(),
+                        KeyCode::Enter => self.handle_enter_on_insert_mode(),
                         _ => {}
                     },
                     InputMode::Control => {}
                     InputMode::Insert => {}
                 }
             }
+        }
+    }
+
+    fn popup_area(&self, area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+        let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
+        let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+        let [area] = vertical.areas(area);
+        let [area] = horizontal.areas(area);
+        area
+    }
+
+    fn show_popup(&mut self, msg: String) {
+        self.is_show_popup = true;
+        self.popup_msg = msg;
+    }
+
+    fn get_request_name(&mut self) {
+        if self.selected_collection == "" {
+            self.show_popup("Please select a collection first".to_string());
+            self.focused_window = FocusedWindow::Collections;
+        }
+        self.selected_request = self
+            .collections
+            .get(self.collection_window_list_state.selected().unwrap())
+            .unwrap()
+            .to_string()
+    }
+
+    // saving the header in the json
+    fn handle_enter_on_insert_mode(&mut self) {
+        self.get_request_name();
+        match self.focused_window {
+            FocusedWindow::Request => match self.selected_tab {
+                0 => {
+                    // accept enter only when focused on the add element
+                    if self.sub_focus_element == 2 {
+                        let _ = events::enter::request_widget_edit_headers_enter_event(
+                            &self.input_buffer,
+                            &self.get_request_file_path().unwrap(),
+                        )
+                        .unwrap();
+
+                        self.refresh_request_data()
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
         }
     }
 
@@ -646,7 +718,7 @@ impl App {
                             request_widget_child_container_input,
                             self.sub_focus_element,
                             &mut self.input_buffer,
-                        )
+                        );
                     }
                 }
                 _ => {}
@@ -668,5 +740,18 @@ impl App {
             &self.focused_window,
             response_widget_parent_container,
         );
+
+        if self.is_show_popup {
+            //let cowsay = Command::new("cowsay")
+            //    .arg(self.popup_msg.clone())
+            //    .output()
+            //    .unwrap()
+            //    .stdout;
+            let msg = Paragraph::new(self.popup_msg.clone())
+                .block(Block::bordered().title_top(self.popup_type.to_string()));
+            let area = self.popup_area(frame.area(), 60, 20);
+            frame.render_widget(Clear, area); //this clears out the background
+            frame.render_widget(msg, area);
+        }
     }
 }

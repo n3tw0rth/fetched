@@ -95,9 +95,9 @@ pub fn set_button_block<'a>(is_focused: bool) -> Block<'a> {
 pub fn set_button_style(is_focused: bool) -> Style {
     let theme = get_theme().unwrap();
     let style = Style::new().fg(if is_focused {
-        Color::from_u32(theme.focus.background)
+        Color::from_u32(theme.focus.foreground)
     } else {
-        Color::from_u32(theme.normal.background)
+        Color::from_u32(theme.normal.foreground)
     });
     style
 }

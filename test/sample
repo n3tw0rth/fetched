@@ -1,0 +1,29 @@
+{
+  "body": null,
+  "body_type": "json",
+  "headers": {
+    "Authorization": "Bearer some-token",
+    "Content-Type": "application/json",
+    "User-Agent": "CustomClient/1.0",
+    "another-header": "value-here",
+    "sdfasd": "sdf",
+    "sdfksdl": "sfkjl",
+    "sdflskd": "sdfsdf",
+    "sfs": "sdfs",
+    "this is the ": "sdfkjsdlfk"
+  },
+  "metadata": {},
+  "method": "POST",
+  "options": {
+    "attach_cookies": true,
+    "follow_redirect": true,
+    "proxy": "https://user:password@localhost:1080",
+    "timeout": 0.5,
+    "validate_ssl": true
+  },
+  "query_parameters": {
+    "page": "2",
+    "search": "example"
+  },
+  "url": "https://example.com/api/resource"
+}
