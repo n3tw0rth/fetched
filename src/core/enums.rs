@@ -1,4 +1,3 @@
-use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, FromRepr};
 
 #[derive(Clone, PartialEq)]

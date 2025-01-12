@@ -3,7 +3,6 @@ use color_eyre::Result;
 mod components;
 mod constants;
 mod core;
-mod io;
 
 use components::structs::App;
 

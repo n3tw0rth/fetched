@@ -1,10 +1,10 @@
-use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::widgets::{Block, Padding};
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType};
 use serde::Deserialize;
 use std::fs;
 use toml::de::Error;
 
-use crate::core::enums::{ThemeAttribute, ThemeState, WidgetType};
+use crate::core::enums::{ThemeState, WidgetType};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
@@ -33,10 +33,12 @@ pub fn set_border_style<'a>(
 ) -> Result<Block<'a>, Box<dyn std::error::Error>> {
     if is_window_selected {
         Ok(Block::bordered()
+            .border_type(BorderType::Rounded)
             .title_alignment(ratatui::layout::Alignment::Left)
             .style(Style::new().bg(Color::from_u32(theme.focus.background))))
     } else {
         Ok(Block::bordered()
+            .border_type(BorderType::Rounded)
             .title_alignment(ratatui::layout::Alignment::Left)
             .style(
                 Style::new(), //.bg(Color::from_u32(theme.normal.background))
@@ -70,16 +72,14 @@ pub fn match_color_theme_for_widgets(
 // set the border when input elements are focused
 pub fn set_input_block<'a>(is_focused: bool) -> Block<'a> {
     let theme = get_theme().unwrap();
-    let block = Block::bordered().border_style(if is_focused {
-        Color::from_u32(theme.focus.border)
-    } else {
-        Color::from_u32(theme.normal.border)
-    });
+    let block = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(if is_focused {
+            Color::from_u32(theme.focus.border)
+        } else {
+            Color::from_u32(theme.normal.border)
+        });
     block
-}
-
-pub fn set_input_style(_is_focused: bool) -> Style {
-    todo!()
 }
 
 pub fn set_button_block<'a>(is_focused: bool) -> Block<'a> {

@@ -4,8 +4,6 @@ use dirs::{config_dir, home_dir};
 use std::fs::{self};
 use std::io::prelude::*;
 
-use crate::constants;
-
 pub fn event_handler(input_strategy: InputStrategy, input: String) {
     let cmds: Vec<_> = input.split(' ').collect();
     if input_strategy == InputStrategy::Command {
