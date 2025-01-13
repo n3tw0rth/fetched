@@ -319,7 +319,7 @@ impl App {
                 self.input.clone(),
             );
         } else {
-            handler::event_handler(self.input_strategy.clone(), self.input.clone());
+            handler::event_handler(self.input_strategy.clone(), self.input.clone(), self);
         }
         //match self.input_strategy{
         //    InputStrategy::Search => {}
@@ -382,6 +382,11 @@ impl App {
                         KeyCode::Char('i') => {
                             self.execute_operation_on_selected_window(WindowOperation::Edit, None)
                         }
+                        KeyCode::Esc => {
+                            self.is_show_popup = false;
+                            self.input_mode = InputMode::Normal;
+                            self.reset_input();
+                        }
                         _ => {}
                     },
                     InputMode::Control if key.kind == KeyEventKind::Press => match key.code {
@@ -425,9 +430,9 @@ impl App {
         area
     }
 
-    fn show_popup(&mut self, msg: String) {
+    pub fn show_popup(&mut self, msg: String) {
         self.is_show_popup = true;
-        self.popup_msg = msg;
+        self.popup_msg = msg + &self.input_mode.to_string();
     }
 
     fn get_request_name(&mut self) {
@@ -591,8 +596,11 @@ impl App {
             );
         frame.render_widget(http_method_widget, self.get_rectangle("h0".into()));
         // url
-        let url_widget =
-            Paragraph::new("https://api.com").block(Block::bordered().style(Color::White));
+        let url_widget = Paragraph::new("https://api.com").block(
+            Block::bordered()
+                .border_type(BorderType::Rounded)
+                .style(Color::White),
+        );
         frame.render_widget(url_widget, self.get_rectangle("h1".into()));
 
         // 2st horizontal layout

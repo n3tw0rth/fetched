@@ -35,7 +35,7 @@ pub fn set_border_style<'a>(
         Ok(Block::bordered()
             .border_type(BorderType::Rounded)
             .title_alignment(ratatui::layout::Alignment::Left)
-            .style(Style::new().bg(Color::from_u32(theme.focus.background))))
+            .style(Style::new().fg(Color::from_u32(theme.focus.highlight))))
     } else {
         Ok(Block::bordered()
             .border_type(BorderType::Rounded)

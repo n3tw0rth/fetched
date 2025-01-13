@@ -1,15 +1,16 @@
+use crate::components::structs::App;
 use crate::core::enums::InputStrategy;
 use crossterm::terminal;
 use dirs::{config_dir, home_dir};
 use std::fs::{self};
 use std::io::prelude::*;
 
-pub fn event_handler(input_strategy: InputStrategy, input: String) {
+pub fn event_handler(input_strategy: InputStrategy, input: String, app: &mut App) {
     let cmds: Vec<_> = input.split(' ').collect();
     if input_strategy == InputStrategy::Command {
         match *cmds.get(0).unwrap() {
             "q" => exit_app(),
-            _ => {}
+            _ => app.show_popup("Command not found".to_string()), //app.show_pop_up("Command not found".to_string()),
         }
     }
 }
