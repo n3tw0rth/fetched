@@ -1,6 +1,5 @@
-use serde_json::{Result, Value};
+use serde_json::Value;
 use std::fs;
-use std::io::prelude::*;
 use std::path::PathBuf;
 
 pub fn read_json_file(file_path: &PathBuf) -> anyhow::Result<Value> {

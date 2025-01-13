@@ -1,7 +1,6 @@
-use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, FromRepr};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Display)]
 pub enum InputMode {
     Normal,
     Insert,

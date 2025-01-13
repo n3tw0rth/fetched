@@ -1,5 +1,5 @@
 use ratatui::layout::Rect;
-use ratatui::widgets::{ListItem, ListState};
+use ratatui::widgets::ListState;
 use serde_json::Value;
 
 use crate::core::enums::{

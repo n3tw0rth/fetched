@@ -1,5 +1,9 @@
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 
 pub fn render<'a>() -> Result<Paragraph<'a>, Box<dyn std::error::Error>> {
-    Ok(Paragraph::new("Authentication").block(Block::bordered().borders(Borders::TOP)))
+    Ok(Paragraph::new("Authentication").block(
+        Block::bordered()
+            .border_type(BorderType::Rounded)
+            .borders(Borders::TOP),
+    ))
 }

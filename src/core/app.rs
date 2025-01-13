@@ -15,7 +15,7 @@ use crossterm::terminal::{
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::Flex;
-use ratatui::widgets::Clear;
+use ratatui::widgets::{BorderType, Clear};
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -319,7 +319,7 @@ impl App {
                 self.input.clone(),
             );
         } else {
-            handler::event_handler(self.input_strategy.clone(), self.input.clone());
+            handler::event_handler(self.input_strategy.clone(), self.input.clone(), self);
         }
         //match self.input_strategy{
         //    InputStrategy::Search => {}
@@ -382,6 +382,11 @@ impl App {
                         KeyCode::Char('i') => {
                             self.execute_operation_on_selected_window(WindowOperation::Edit, None)
                         }
+                        KeyCode::Esc => {
+                            self.is_show_popup = false;
+                            self.input_mode = InputMode::Normal;
+                            self.reset_input();
+                        }
                         _ => {}
                     },
                     InputMode::Control if key.kind == KeyEventKind::Press => match key.code {
@@ -425,9 +430,9 @@ impl App {
         area
     }
 
-    fn show_popup(&mut self, msg: String) {
+    pub fn show_popup(&mut self, msg: String) {
         self.is_show_popup = true;
-        self.popup_msg = msg;
+        self.popup_msg = msg + &self.input_mode.to_string();
     }
 
     fn get_request_name(&mut self) {
@@ -545,7 +550,11 @@ impl App {
                 }
                 _ => Style::default(),
             })
-            .block(Block::bordered().title(self.decide_input_title().unwrap()));
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Rounded)
+                    .title(self.decide_input_title().unwrap()),
+            );
         // render the input field only in editing mode
         if self.input_mode == InputMode::Control {
             frame.render_widget(input, self.get_rectangle("v0".into()))
@@ -580,11 +589,18 @@ impl App {
         let http_method_widget = Paragraph::new("POST")
             .style(Style::default().add_modifier(Modifier::BOLD))
             .alignment(Alignment::Center)
-            .block(Block::bordered().style(Color::from_u32(self.theme.focus.border)));
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Rounded)
+                    .style(Color::from_u32(self.theme.focus.border)),
+            );
         frame.render_widget(http_method_widget, self.get_rectangle("h0".into()));
         // url
-        let url_widget =
-            Paragraph::new("https://api.com").block(Block::bordered().style(Color::White));
+        let url_widget = Paragraph::new("https://api.com").block(
+            Block::bordered()
+                .border_type(BorderType::Rounded)
+                .style(Color::White),
+        );
         frame.render_widget(url_widget, self.get_rectangle("h1".into()));
 
         // 2st horizontal layout
@@ -747,8 +763,11 @@ impl App {
             //    .output()
             //    .unwrap()
             //    .stdout;
-            let msg = Paragraph::new(self.popup_msg.clone())
-                .block(Block::bordered().title_top(self.popup_type.to_string()));
+            let msg = Paragraph::new(self.popup_msg.clone()).block(
+                Block::bordered()
+                    .border_type(BorderType::Rounded)
+                    .title_top(self.popup_type.to_string()),
+            );
             let area = self.popup_area(frame.area(), 60, 20);
             frame.render_widget(Clear, area); //this clears out the background
             frame.render_widget(msg, area);
