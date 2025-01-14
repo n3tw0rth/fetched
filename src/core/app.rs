@@ -238,6 +238,7 @@ impl App {
     fn refresh_request_data(&mut self) {
         let json_data = request_parser::read_json_file(&self.get_request_file_path().unwrap());
         self.request_data = json_data.unwrap();
+        helpers::logger(format!("{:?}", self.request_data));
         self.current_operation = WindowOperation::Null;
         self.input_buffer.clear();
     }
@@ -342,6 +343,12 @@ impl App {
                         KeyCode::Char('c') => {
                             if key.modifiers == KeyModifiers::CONTROL {
                                 super::handler::exit_app();
+                            }
+                        }
+                        //TODO: read the request_data and fill the url
+                        KeyCode::Char('v') => {
+                            if key.modifiers == KeyModifiers::CONTROL {
+                                helpers::logger(format!("{:?}", self.request_data))
                             }
                         }
                         KeyCode::Char(':') => {
