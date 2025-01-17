@@ -344,6 +344,12 @@ impl App {
                                 super::handler::exit_app();
                             }
                         }
+                        //TODO: read the request_data and fill the url
+                        KeyCode::Char('v') => {
+                            if key.modifiers == KeyModifiers::CONTROL {
+                                helpers::logger(format!("{:?}", self.request_data))
+                            }
+                        }
                         KeyCode::Char(':') => {
                             self.input_strategy = InputStrategy::Command;
                             self.input_mode = InputMode::Control;
@@ -520,20 +526,31 @@ impl App {
     }
 
     fn draw(&mut self, frame: &mut Frame) {
+        let [header, content, footer] = Layout::vertical([
+            Constraint::Length(1),
+            Constraint::Min(1),
+            Constraint::Length(1),
+        ])
+        .areas(frame.area());
+
         let mut vertical_layout: [Rect; 3] = Layout::vertical([
             Constraint::Length(0),
             Constraint::Length(3),
             Constraint::Min(1),
         ])
-        .areas(frame.area());
+        .areas(content);
+
         if self.input_mode == InputMode::Control {
             vertical_layout = Layout::vertical([
                 Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Min(1),
             ])
-            .areas(frame.area());
+            .areas(content);
         }
+
+        drawable::header::draw(frame, header);
+        drawable::footer::draw(frame, footer, &self.focused_window);
 
         self.rectangles
             .insert("v0".into(), *vertical_layout.get(0).unwrap());
