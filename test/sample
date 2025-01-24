@@ -1,31 +1,31 @@
 {
-  "body": "",
-  "body_type": "json",
-  "headers": {
-    "Authorization": "Bearer some-token",
-    "Content-Type": "application/json",
-    "User-Agent": "CustomClient/1.0",
-    "another-header": "value-here",
-    "sdfasd": "sdf",
-    "sdfksdl": "sfkjl",
-    "sdflskd": "sdfsdf",
-    "sdfs": "sdfk",
-    "sdfsd": "dsfksd",
-    "sfs": "sdfs",
-    "this is the ": "sdfkjsdlfk"
-  },
-  "metadata": {},
   "method": "POST",
-  "options": {
-    "attach_cookies": true,
-    "follow_redirect": true,
-    "proxy": "https://user:password@localhost:1080",
-    "timeout": 5,
-    "validate_ssl": true
+  "url": "https://example.com/api/resource",
+  "headers": {
+    "updated": "value",
+    "sdfsd": "dsfksd",
+    "Authorization": "Bearer some-token",
+    "sdflskd": "sdfsdf",
+    "another-header": "value-here",
+    "Content-Type": "application/json",
+    "sdfksdl": "sfkjl",
+    "sdfs": "sdfk",
+    "sfs": "sdfs",
+    "this is the ": "sdfkjsdlfk",
+    "sdfasd": "sdf",
+    "User-Agent": "CustomClient/1.0"
   },
   "query_parameters": {
     "page": "2",
     "search": "example"
   },
-  "url": "https://example.com/api/resource"
+  "body_type": "json",
+  "body": "",
+  "options": {
+    "validate_ssl": true,
+    "follow_redirect": true,
+    "attach_cookies": true,
+    "proxy": "https://user:password@localhost:1080",
+    "timeout": 5
+  }
 }

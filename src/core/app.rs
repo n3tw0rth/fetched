@@ -684,75 +684,19 @@ impl App {
         // Request Widget
         //
         //
-        let requests_widget = Tabs::new(RequestWidgetTabs::iter().map(|tab| tab.to_string()))
-            .select(self.selected_tab)
-            .block(
-                theme::set_border_style(
-                    self.focused_window == FocusedWindow::Request,
-                    self.theme.clone(),
-                )
-                .unwrap()
-                .title("[2] Requests"),
-            )
-            .divider("")
-            .style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Normal,
-                    WidgetType::Tab,
-                )
-                .unwrap(),
-            )
-            .highlight_style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Focus,
-                    WidgetType::Tab,
-                )
-                .unwrap(),
-            );
-
         let request_widget_parent_container = self.get_rectangle("sv0".into());
 
-        frame.render_widget(requests_widget, request_widget_parent_container);
-
-        // select the right content to display using the select tab
-        let current_request_widget_content = manager::match_request_widget_with_opened_tab(
-            RequestWidgetTabs::iter().nth(self.selected_tab).unwrap(),
-        )
-        .unwrap();
-
-        // adjust the child Rec based on the parent to load request content
-        let request_widget_child_containers: [Rect; 2] =
-            Layout::vertical([Constraint::Min(1), Constraint::Length(4)])
-                .areas(request_widget_parent_container);
-        let request_widget_child_container_content =
-            helpers::get_inner(*request_widget_child_containers.get(0).unwrap(), 1, 2, 2, 1);
-        let request_widget_child_container_input =
-            helpers::get_inner(*request_widget_child_containers.get(1).unwrap(), 1, 0, 2, 1);
-
-        frame.render_widget(
-            current_request_widget_content,
-            request_widget_child_container_content,
+        widgets::request::draw_response_widget(
+            &self.theme,
+            self.selected_response_tab,
+            frame,
+            &mut self.input_buffer,
+            &self.focused_window,
+            &self.input_mode,
+            self.current_operation,
+            self.sub_focus_element,
+            request_widget_parent_container,
         );
-
-        // render request component sub components bound to operations
-        match self.focused_window {
-            FocusedWindow::Request => match self.current_operation {
-                WindowOperation::Edit => {
-                    if self.input_mode == InputMode::Insert {
-                        drawable::editheader::draw(
-                            frame,
-                            request_widget_child_container_input,
-                            self.sub_focus_element,
-                            &mut self.input_buffer,
-                        );
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        }
 
         //
         //
