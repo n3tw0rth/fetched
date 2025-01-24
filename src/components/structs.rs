@@ -1,16 +1,14 @@
 use ratatui::layout::Rect;
 use ratatui::widgets::ListState;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
 
-use crate::core::enums::{
-    FocusedWindow, InputMode, InputStrategy, LogTypes, RequestWidgetTabs, WindowOperation,
-};
+use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, LogTypes, WindowOperation};
 use crate::core::theme;
 use std::collections::HashMap;
 
 //App holds the state of the application
 pub struct App {
-    pub request_data: Value,
+    pub request_data: RequestStructure,
     pub rectangles: HashMap<String, Rect>,
     pub input_buffer: HashMap<u8, String>,
     pub theme: theme::Config,
@@ -45,6 +43,26 @@ pub struct App {
     pub popup_type: LogTypes,
 }
 
-pub struct RequestWidget {
-    pub tabs: RequestWidgetTabs,
+//pub struct RequestWidget {
+//    pub tabs: RequestWidgetTabs,
+//}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Default)]
+pub struct RequestStructure {
+    pub method: String,
+    pub url: String,
+    pub headers: HashMap<String, String>,
+    pub query_parameters: HashMap<String, String>,
+    pub body_type: String,
+    pub body: String,
+    pub options: RequestOptions,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Default)]
+pub struct RequestOptions {
+    validate_ssl: bool,
+    follow_redirect: bool,
+    attach_cookies: bool,
+    proxy: String,
+    timeout: u8,
 }

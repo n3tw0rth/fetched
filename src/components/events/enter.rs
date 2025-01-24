@@ -1,6 +1,5 @@
 use crate::core::request_parser;
 use anyhow::Result;
-use serde_json::json;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -10,13 +9,12 @@ pub fn request_widget_edit_headers_enter_event(
 ) -> Result<()> {
     let mut data = request_parser::read_json_file(&file_path)?;
 
-    if let Some(headers) = data.get_mut("headers").and_then(|v| v.as_object_mut()) {
-        // Update an existing field inside the nested object
-        headers.insert(
-            input_buffer.get(&0).unwrap().to_string(),
-            json!(input_buffer.get(&1).unwrap()),
-        );
-    }
+    // Update an existing field inside the nested object
+    data.headers.insert(
+        input_buffer.get(&0).unwrap().to_string(),
+        //json!(input_buffer.get(&1).unwrap()),
+        input_buffer.get(&1).unwrap().to_string(),
+    );
 
     crate::core::helpers::logger("called");
 

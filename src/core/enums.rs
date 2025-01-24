@@ -14,7 +14,7 @@ pub enum InputStrategy {
     Prompt,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Display)]
 pub enum FocusedWindow {
     Collections,
     Request,

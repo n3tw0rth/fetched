@@ -1,4 +1,4 @@
-use crate::components::structs::App;
+use crate::components::structs::{App, RequestStructure};
 use crate::components::{drawable, events, manager, widgets};
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, LogTypes, RequestWidgetTabs, ResponseWidgetTabs,
@@ -35,7 +35,7 @@ type Terminal = ratatui::Terminal<CrosstermBackend<std::io::Stdout>>;
 impl App {
     pub fn new() -> Self {
         Self {
-            request_data: serde_json::Value::Null,
+            request_data: RequestStructure::default(),
             rectangles: HashMap::new(),
             input_buffer: HashMap::new(),
             theme: theme::get_theme().unwrap(),
@@ -46,7 +46,7 @@ impl App {
             focused_window: FocusedWindow::Collections,
             //state
             collections: handler::list_collections(),
-            collection_window_list_state: ListState::default().with_selected(Some(1)),
+            collection_window_list_state: ListState::default().with_selected(Some(0)),
             selected_collection: "".to_string(),
             selected_request: "".to_string(),
             show_collection_children: false,
@@ -135,11 +135,12 @@ impl App {
         *self.rectangles.get_key_value(&key).unwrap().1
     }
 
-    fn get_selected_children(&self) -> Result<String, Box<dyn std::error::Error>> {
+    fn get_selected_value(&self) -> Result<String, Box<dyn std::error::Error>> {
+        helpers::logger(self.collections.get(0));
         Ok(self
             .collections
             .get(self.collection_window_list_state.selected().unwrap())
-            .unwrap()
+            .unwrap_or(self.collections.get(0).unwrap())
             .to_string())
     }
 
@@ -165,7 +166,7 @@ impl App {
                     if self.show_collection_children {
                         let file_path = handler::get_file_path(
                             self.selected_collection.clone(),
-                            self.get_selected_children().unwrap(),
+                            self.get_selected_value().unwrap(),
                         )
                         .unwrap();
                         self.run_editor(&mut terminal.unwrap(), file_path).unwrap()
@@ -231,12 +232,15 @@ impl App {
         let path = std::env::current_dir()
             .unwrap()
             .join(&self.selected_collection)
-            .join(&self.selected_request);
+            .join(self.get_selected_value().unwrap());
+
+        helpers::logger(self.collection_window_list_state.selected());
         Ok(path)
     }
 
     fn refresh_request_data(&mut self) {
         let json_data = request_parser::read_json_file(&self.get_request_file_path().unwrap());
+
         self.request_data = json_data.unwrap();
         self.current_operation = WindowOperation::Null;
         self.input_buffer.clear();
@@ -257,6 +261,7 @@ impl App {
                         self.selected_collection = "".to_string();
                         self.collections = super::handler::list_collections()
                     }
+                    self.collection_window_list_state.select(Some(0));
                 }
                 WindowMotion::Right => {
                     if !self.show_collection_children {
@@ -271,6 +276,7 @@ impl App {
                             self.selected_collection.clone(),
                         )
                     }
+                    self.collection_window_list_state.select(Some(0));
                 }
                 _ => {}
             },
@@ -310,6 +316,11 @@ impl App {
             },
             _ => {}
         }
+
+        // refresh data once the selections are changed
+        if self.show_collection_children {
+            self.refresh_request_data();
+        }
     }
 
     fn submit_message(&mut self) {
@@ -344,7 +355,6 @@ impl App {
                                 super::handler::exit_app();
                             }
                         }
-                        //TODO: read the request_data and fill the url
                         KeyCode::Char('v') => {
                             if key.modifiers == KeyModifiers::CONTROL {
                                 helpers::logger(format!("{:?}", self.request_data))
@@ -441,21 +451,8 @@ impl App {
         self.popup_msg = msg + &self.input_mode.to_string();
     }
 
-    fn get_request_name(&mut self) {
-        if self.selected_collection == "" {
-            self.show_popup("Please select a collection first".to_string());
-            self.focused_window = FocusedWindow::Collections;
-        }
-        self.selected_request = self
-            .collections
-            .get(self.collection_window_list_state.selected().unwrap())
-            .unwrap()
-            .to_string()
-    }
-
     // saving the header in the json
     fn handle_enter_on_insert_mode(&mut self) {
-        self.get_request_name();
         match self.focused_window {
             FocusedWindow::Request => match self.selected_tab {
                 0 => {
@@ -466,8 +463,6 @@ impl App {
                             &self.get_request_file_path().unwrap(),
                         )
                         .unwrap();
-
-                        self.refresh_request_data()
                     }
                 }
                 _ => {}
@@ -613,7 +608,7 @@ impl App {
             );
         frame.render_widget(http_method_widget, self.get_rectangle("h0".into()));
         // url
-        let url_widget = Paragraph::new("https://api.com").block(
+        let url_widget = Paragraph::new(self.request_data.url.clone()).block(
             Block::bordered()
                 .border_type(BorderType::Rounded)
                 .style(Color::White),

@@ -16,9 +16,9 @@ pub fn event_handler(input_strategy: InputStrategy, input: String, app: &mut App
 }
 
 pub fn exit_app() {
-    _ = std::process::Command::new("clear").status();
     _ = terminal::disable_raw_mode();
     crate::core::helpers::clear_logger();
+    ratatui::restore();
     std::process::exit(0x0100);
 }
 
@@ -34,8 +34,6 @@ pub fn create_config_folder() {
         // Create the directory (and any necessary parent directories)
         fs::create_dir_all(&config_dir).unwrap();
         println!("Created directory: {:?}", config_dir);
-    } else {
-        println!("Directory already exists: {:?}", config_dir);
     }
 
     //setup the current working dir
@@ -43,8 +41,6 @@ pub fn create_config_folder() {
     if !cwd.unwrap().exists() {
         // create the environment.toml file
         _ = fs::File::create(get_project_path().unwrap().join("environment.toml"))
-    } else {
-        println!("Directory already exists: {:?}", config_dir);
     }
 }
 
@@ -159,7 +155,6 @@ pub fn create_request(
 }
 
 pub fn delete_collection(collection_name: String) -> Result<(), Box<dyn std::error::Error>> {
-    super::helpers::logger(collection_name.clone());
     _ = fs::remove_dir(std::env::current_dir().unwrap().join(collection_name)).unwrap();
     Ok(())
 }
@@ -168,14 +163,6 @@ pub fn delete_collection_children(
     collection_name: String,
     children: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    super::helpers::logger(
-        std::env::current_dir()
-            .unwrap()
-            .join(collection_name.clone())
-            .join(children.clone())
-            .display()
-            .to_string(),
-    );
     _ = fs::remove_file(
         std::env::current_dir()
             .unwrap()
