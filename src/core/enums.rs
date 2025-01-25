@@ -1,21 +1,24 @@
 use strum_macros::{Display, EnumIter, FromRepr};
 
-#[derive(Clone, PartialEq, Display)]
+#[derive(Default, Clone, PartialEq, Display)]
 pub enum InputMode {
+    #[default]
     Normal,
     Insert,
     Control,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 pub enum InputStrategy {
-    Search,  // accessed using /
+    #[default]
+    Search, // accessed using /
     Command, // accessed using :
     Prompt,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq, Display)]
 pub enum FocusedWindow {
+    #[default]
     Collections,
     Request,
     Response,
@@ -31,8 +34,9 @@ pub enum WindowMotion {
     Collapse,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Default, Clone, Copy)]
 pub enum WindowOperation {
+    #[default]
     Create,
     Delete,
     Rename,

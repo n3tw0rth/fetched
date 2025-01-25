@@ -1,11 +1,8 @@
 {
-  "body": null,
+  "body": "",
   "body_type": "json",
   "headers": {
     "Content-Type": "application/json",
-    "sdfkjal": "sdlfkj",
-    "sdfsdf": "sdfslk",
-    "sdlfkjd": "fld"
   },
   "metadata": {},
   "method": "POST",
@@ -13,12 +10,12 @@
     "attach_cookies": true,
     "follow_redirect": true,
     "proxy": "",
-    "timeout": 0.5,
+    "timeout": 5,
     "validate_ssl": true
   },
   "query_parameters": {
     "page": "2",
     "search": "example"
   },
-  "url": "https://example.com/api/resource"
+  "url": "https://example.com/api/create"
 }

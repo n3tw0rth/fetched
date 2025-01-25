@@ -6,13 +6,13 @@ use toml::de::Error;
 
 use crate::core::enums::{ThemeState, WidgetType};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, Deserialize)]
 pub struct Config {
     pub focus: Colors,
     pub normal: Colors,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Default, Debug, Deserialize, Clone)]
 pub struct Colors {
     pub foreground: u32,
     pub background: u32,
@@ -84,11 +84,13 @@ pub fn set_input_block<'a>(is_focused: bool) -> Block<'a> {
 
 pub fn set_button_block<'a>(is_focused: bool) -> Block<'a> {
     let theme = get_theme().unwrap();
-    let block = Block::bordered().border_style(if is_focused {
-        Color::from_u32(theme.focus.border)
-    } else {
-        Color::from_u32(theme.normal.border)
-    });
+    let block = Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(if is_focused {
+            Color::from_u32(theme.focus.border)
+        } else {
+            Color::from_u32(theme.normal.border)
+        });
     block
 }
 

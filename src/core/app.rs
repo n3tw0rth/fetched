@@ -1,4 +1,4 @@
-use crate::components::structs::App;
+use crate::components::structs::{App, RequestStructure};
 use crate::components::{drawable, events, manager, widgets};
 use crate::core::enums::{
     FocusedWindow, InputMode, InputStrategy, LogTypes, RequestWidgetTabs, ResponseWidgetTabs,
@@ -15,7 +15,7 @@ use crossterm::terminal::{
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::Flex;
-use ratatui::widgets::{BorderType, Clear};
+use ratatui::widgets::{BorderType, Clear, ScrollbarState};
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -35,7 +35,7 @@ type Terminal = ratatui::Terminal<CrosstermBackend<std::io::Stdout>>;
 impl App {
     pub fn new() -> Self {
         Self {
-            request_data: serde_json::Value::Null,
+            request_data: RequestStructure::default(),
             rectangles: HashMap::new(),
             input_buffer: HashMap::new(),
             theme: theme::get_theme().unwrap(),
@@ -46,12 +46,14 @@ impl App {
             focused_window: FocusedWindow::Collections,
             //state
             collections: handler::list_collections(),
-            collection_window_list_state: ListState::default().with_selected(Some(1)),
+            collection_window_list_state: ListState::default().with_selected(Some(0)),
             selected_collection: "".to_string(),
             selected_request: "".to_string(),
             show_collection_children: false,
             // request tabs
             selected_tab: 0,
+            vertical_scroll: 0,
+            vertical_scroll_state: ScrollbarState::default(),
             //response tabs
             selected_response_tab: 0,
             current_operation: WindowOperation::Null,
@@ -135,11 +137,12 @@ impl App {
         *self.rectangles.get_key_value(&key).unwrap().1
     }
 
-    fn get_selected_children(&self) -> Result<String, Box<dyn std::error::Error>> {
+    fn get_selected_value(&self) -> Result<String, Box<dyn std::error::Error>> {
+        helpers::logger(self.collections.get(0));
         Ok(self
             .collections
             .get(self.collection_window_list_state.selected().unwrap())
-            .unwrap()
+            .unwrap_or(self.collections.get(0).unwrap())
             .to_string())
     }
 
@@ -165,7 +168,7 @@ impl App {
                     if self.show_collection_children {
                         let file_path = handler::get_file_path(
                             self.selected_collection.clone(),
-                            self.get_selected_children().unwrap(),
+                            self.get_selected_value().unwrap(),
                         )
                         .unwrap();
                         self.run_editor(&mut terminal.unwrap(), file_path).unwrap()
@@ -231,12 +234,15 @@ impl App {
         let path = std::env::current_dir()
             .unwrap()
             .join(&self.selected_collection)
-            .join(&self.selected_request);
+            .join(self.get_selected_value().unwrap());
+
+        helpers::logger(self.collection_window_list_state.selected());
         Ok(path)
     }
 
     fn refresh_request_data(&mut self) {
         let json_data = request_parser::read_json_file(&self.get_request_file_path().unwrap());
+
         self.request_data = json_data.unwrap();
         self.current_operation = WindowOperation::Null;
         self.input_buffer.clear();
@@ -257,6 +263,7 @@ impl App {
                         self.selected_collection = "".to_string();
                         self.collections = super::handler::list_collections()
                     }
+                    self.collection_window_list_state.select(Some(0));
                 }
                 WindowMotion::Right => {
                     if !self.show_collection_children {
@@ -271,6 +278,7 @@ impl App {
                             self.selected_collection.clone(),
                         )
                     }
+                    self.collection_window_list_state.select(Some(0));
                 }
                 _ => {}
             },
@@ -288,6 +296,11 @@ impl App {
                     } else {
                         self.selected_tab = self.selected_tab + 1;
                     };
+                }
+                WindowMotion::Down => {
+                    self.vertical_scroll = self.vertical_scroll.saturating_add(1);
+                    self.vertical_scroll_state =
+                        self.vertical_scroll_state.position(self.vertical_scroll)
                 }
                 _ => {}
             },
@@ -309,6 +322,11 @@ impl App {
                 _ => {}
             },
             _ => {}
+        }
+
+        // refresh data once the selections are changed
+        if self.show_collection_children {
+            self.refresh_request_data();
         }
     }
 
@@ -342,6 +360,11 @@ impl App {
                         KeyCode::Char('c') => {
                             if key.modifiers == KeyModifiers::CONTROL {
                                 super::handler::exit_app();
+                            }
+                        }
+                        KeyCode::Char('v') => {
+                            if key.modifiers == KeyModifiers::CONTROL {
+                                helpers::logger(format!("{:?}", self.request_data))
                             }
                         }
                         KeyCode::Char(':') => {
@@ -432,24 +455,11 @@ impl App {
 
     pub fn show_popup(&mut self, msg: String) {
         self.is_show_popup = true;
-        self.popup_msg = msg + &self.input_mode.to_string();
-    }
-
-    fn get_request_name(&mut self) {
-        if self.selected_collection == "" {
-            self.show_popup("Please select a collection first".to_string());
-            self.focused_window = FocusedWindow::Collections;
-        }
-        self.selected_request = self
-            .collections
-            .get(self.collection_window_list_state.selected().unwrap())
-            .unwrap()
-            .to_string()
+        self.popup_msg = msg
     }
 
     // saving the header in the json
     fn handle_enter_on_insert_mode(&mut self) {
-        self.get_request_name();
         match self.focused_window {
             FocusedWindow::Request => match self.selected_tab {
                 0 => {
@@ -460,8 +470,6 @@ impl App {
                             &self.get_request_file_path().unwrap(),
                         )
                         .unwrap();
-
-                        self.refresh_request_data()
                     }
                 }
                 _ => {}
@@ -520,20 +528,31 @@ impl App {
     }
 
     fn draw(&mut self, frame: &mut Frame) {
+        let [header, content, footer] = Layout::vertical([
+            Constraint::Length(1),
+            Constraint::Min(1),
+            Constraint::Length(1),
+        ])
+        .areas(frame.area());
+
         let mut vertical_layout: [Rect; 3] = Layout::vertical([
             Constraint::Length(0),
             Constraint::Length(3),
             Constraint::Min(1),
         ])
-        .areas(frame.area());
+        .areas(content);
+
         if self.input_mode == InputMode::Control {
             vertical_layout = Layout::vertical([
                 Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Min(1),
             ])
-            .areas(frame.area());
+            .areas(content);
         }
+
+        drawable::header::draw(frame, header);
+        drawable::footer::draw(frame, footer, &self.focused_window);
 
         self.rectangles
             .insert("v0".into(), *vertical_layout.get(0).unwrap());
@@ -596,7 +615,7 @@ impl App {
             );
         frame.render_widget(http_method_widget, self.get_rectangle("h0".into()));
         // url
-        let url_widget = Paragraph::new("https://api.com").block(
+        let url_widget = Paragraph::new(self.request_data.url.clone()).block(
             Block::bordered()
                 .border_type(BorderType::Rounded)
                 .style(Color::White),
@@ -672,75 +691,9 @@ impl App {
         // Request Widget
         //
         //
-        let requests_widget = Tabs::new(RequestWidgetTabs::iter().map(|tab| tab.to_string()))
-            .select(self.selected_tab)
-            .block(
-                theme::set_border_style(
-                    self.focused_window == FocusedWindow::Request,
-                    self.theme.clone(),
-                )
-                .unwrap()
-                .title("[2] Requests"),
-            )
-            .divider("")
-            .style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Normal,
-                    WidgetType::Tab,
-                )
-                .unwrap(),
-            )
-            .highlight_style(
-                theme::match_color_theme_for_widgets(
-                    self.theme.clone(),
-                    ThemeState::Focus,
-                    WidgetType::Tab,
-                )
-                .unwrap(),
-            );
-
         let request_widget_parent_container = self.get_rectangle("sv0".into());
 
-        frame.render_widget(requests_widget, request_widget_parent_container);
-
-        // select the right content to display using the select tab
-        let current_request_widget_content = manager::match_request_widget_with_opened_tab(
-            RequestWidgetTabs::iter().nth(self.selected_tab).unwrap(),
-        )
-        .unwrap();
-
-        // adjust the child Rec based on the parent to load request content
-        let request_widget_child_containers: [Rect; 2] =
-            Layout::vertical([Constraint::Min(1), Constraint::Length(4)])
-                .areas(request_widget_parent_container);
-        let request_widget_child_container_content =
-            helpers::get_inner(*request_widget_child_containers.get(0).unwrap(), 1, 2, 2, 1);
-        let request_widget_child_container_input =
-            helpers::get_inner(*request_widget_child_containers.get(1).unwrap(), 1, 0, 2, 1);
-
-        frame.render_widget(
-            current_request_widget_content,
-            request_widget_child_container_content,
-        );
-
-        // render request component sub components bound to operations
-        match self.focused_window {
-            FocusedWindow::Request => match self.current_operation {
-                WindowOperation::Edit => {
-                    if self.input_mode == InputMode::Insert {
-                        drawable::editheader::draw(
-                            frame,
-                            request_widget_child_container_input,
-                            self.sub_focus_element,
-                            &mut self.input_buffer,
-                        );
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        }
+        widgets::request::draw_request_widget(frame, self, request_widget_parent_container);
 
         //
         //
