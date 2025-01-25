@@ -6,13 +6,13 @@ use toml::de::Error;
 
 use crate::core::enums::{ThemeState, WidgetType};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, Deserialize)]
 pub struct Config {
     pub focus: Colors,
     pub normal: Colors,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Default, Debug, Deserialize, Clone)]
 pub struct Colors {
     pub foreground: u32,
     pub background: u32,

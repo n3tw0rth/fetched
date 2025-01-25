@@ -15,7 +15,7 @@ use crossterm::terminal::{
 use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::Flex;
-use ratatui::widgets::{BorderType, Clear};
+use ratatui::widgets::{BorderType, Clear, ScrollbarState};
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Layout, Position, Rect},
@@ -52,6 +52,8 @@ impl App {
             show_collection_children: false,
             // request tabs
             selected_tab: 0,
+            vertical_scroll: 0,
+            vertical_scroll_state: ScrollbarState::default(),
             //response tabs
             selected_response_tab: 0,
             current_operation: WindowOperation::Null,
@@ -295,6 +297,11 @@ impl App {
                         self.selected_tab = self.selected_tab + 1;
                     };
                 }
+                WindowMotion::Down => {
+                    self.vertical_scroll = self.vertical_scroll.saturating_add(1);
+                    self.vertical_scroll_state =
+                        self.vertical_scroll_state.position(self.vertical_scroll)
+                }
                 _ => {}
             },
             FocusedWindow::Response => match motion {
@@ -448,7 +455,7 @@ impl App {
 
     pub fn show_popup(&mut self, msg: String) {
         self.is_show_popup = true;
-        self.popup_msg = msg + &self.input_mode.to_string();
+        self.popup_msg = msg
     }
 
     // saving the header in the json
@@ -686,17 +693,7 @@ impl App {
         //
         let request_widget_parent_container = self.get_rectangle("sv0".into());
 
-        widgets::request::draw_response_widget(
-            &self.theme,
-            self.selected_response_tab,
-            frame,
-            &mut self.input_buffer,
-            &self.focused_window,
-            &self.input_mode,
-            self.current_operation,
-            self.sub_focus_element,
-            request_widget_parent_container,
-        );
+        widgets::request::draw_request_widget(frame, self, request_widget_parent_container);
 
         //
         //

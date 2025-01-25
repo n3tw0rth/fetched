@@ -1,5 +1,5 @@
 use ratatui::layout::Rect;
-use ratatui::widgets::ListState;
+use ratatui::widgets::{ListState, Scrollbar, ScrollbarState};
 use serde::{Deserialize, Serialize};
 
 use crate::core::enums::{FocusedWindow, InputMode, InputStrategy, LogTypes, WindowOperation};
@@ -7,6 +7,7 @@ use crate::core::theme;
 use std::collections::HashMap;
 
 //App holds the state of the application
+#[derive(Default)]
 pub struct App {
     pub request_data: RequestStructure,
     pub rectangles: HashMap<String, Rect>,
@@ -31,6 +32,8 @@ pub struct App {
     pub show_collection_children: bool,
     // request
     pub selected_tab: usize,
+    pub vertical_scroll: usize,
+    pub vertical_scroll_state: ScrollbarState,
     // response
     pub selected_response_tab: usize,
     // operation

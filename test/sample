@@ -2,17 +2,8 @@
   "method": "POST",
   "url": "https://example.com/api/resource",
   "headers": {
-    "updated": "value",
-    "sdfsd": "dsfksd",
     "Authorization": "Bearer some-token",
-    "sdflskd": "sdfsdf",
-    "another-header": "value-here",
     "Content-Type": "application/json",
-    "sdfksdl": "sfkjl",
-    "sdfs": "sdfk",
-    "sfs": "sdfs",
-    "this is the ": "sdfkjsdlfk",
-    "sdfasd": "sdf",
     "User-Agent": "CustomClient/1.0"
   },
   "query_parameters": {

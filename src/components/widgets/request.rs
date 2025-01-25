@@ -1,33 +1,26 @@
 use std::collections::HashMap;
 
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::widgets::Tabs;
+use ratatui::text::Line;
+use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Tabs};
 use ratatui::Frame;
 use strum::IntoEnumIterator;
 
+use crate::components::structs::{App, RequestStructure};
 use crate::components::{drawable, manager};
 use crate::core::enums::{
     FocusedWindow, InputMode, RequestWidgetTabs, ThemeState, WidgetType, WindowOperation,
 };
 use crate::core::{helpers, theme};
 
-pub fn draw_response_widget(
-    current_theme: &theme::Config,
-    selected_tab: usize,
-    frame: &mut Frame,
-    input_buffer: &mut HashMap<u8, String>,
-    focused_window: &FocusedWindow,
-    input_mode: &InputMode,
-    current_operation: WindowOperation,
-    sub_focus_element: u8,
-    area: Rect,
-) {
+pub fn draw_request_widget(frame: &mut Frame, state: &mut App, area: Rect) {
+    let mut scroll_items: Vec<Line> = vec![];
     let requests_widget = Tabs::new(RequestWidgetTabs::iter().map(|tab| tab.to_string()))
-        .select(selected_tab)
+        .select(state.selected_tab)
         .block(
             theme::set_border_style(
-                *focused_window == FocusedWindow::Request,
-                current_theme.clone(),
+                state.focused_window == FocusedWindow::Request,
+                state.theme.clone(),
             )
             .unwrap()
             .title("[2] Requests"),
@@ -35,7 +28,7 @@ pub fn draw_response_widget(
         .divider("")
         .style(
             theme::match_color_theme_for_widgets(
-                current_theme.clone(),
+                state.theme.clone(),
                 ThemeState::Normal,
                 WidgetType::Tab,
             )
@@ -43,7 +36,7 @@ pub fn draw_response_widget(
         )
         .highlight_style(
             theme::match_color_theme_for_widgets(
-                current_theme.clone(),
+                state.theme.clone(),
                 ThemeState::Focus,
                 WidgetType::Tab,
             )
@@ -53,10 +46,10 @@ pub fn draw_response_widget(
     frame.render_widget(requests_widget, area);
 
     // select the right content to display using the select tab
-    let current_request_widget_content = manager::match_request_widget_with_opened_tab(
-        RequestWidgetTabs::iter().nth(selected_tab).unwrap(),
-    )
-    .unwrap();
+    //let current_request_widget_content = manager::match_request_widget_with_opened_tab(
+    //    RequestWidgetTabs::iter().nth(state.selected_tab).unwrap(),
+    //)
+    //.unwrap();
 
     // adjust the child Rec based on the parent to load request content
     let request_widget_child_containers: [Rect; 2] =
@@ -66,21 +59,31 @@ pub fn draw_response_widget(
     let request_widget_child_container_input =
         helpers::get_inner(*request_widget_child_containers.get(1).unwrap(), 1, 0, 2, 1);
 
-    frame.render_widget(
-        current_request_widget_content,
+    //frame.render_widget(
+    //    current_request_widget_content,
+    //    request_widget_child_container_content,
+    //);
+
+    manager::match_request_widget_with_opened_tab(
+        state,
+        frame,
+        scroll_items,
         request_widget_child_container_content,
-    );
+    )
+    .unwrap();
+
+    //}
 
     // render request component sub components bound to operations
-    match focused_window {
-        FocusedWindow::Request => match current_operation {
+    match state.focused_window {
+        FocusedWindow::Request => match state.current_operation {
             WindowOperation::Edit => {
-                if *input_mode == InputMode::Insert {
+                if state.input_mode == InputMode::Insert {
                     drawable::editheader::draw(
                         frame,
                         request_widget_child_container_input,
-                        sub_focus_element,
-                        input_buffer,
+                        state.sub_focus_element,
+                        &mut state.input_buffer,
                     );
                 }
             }

@@ -3,9 +3,6 @@
   "body_type": "json",
   "headers": {
     "Content-Type": "application/json",
-    "sdfkjal": "sdlfkj",
-    "sdfsdf": "sdfslk",
-    "sdlfkjd": "fld"
   },
   "metadata": {},
   "method": "POST",
