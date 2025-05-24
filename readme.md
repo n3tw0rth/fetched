@@ -1,6 +1,6 @@
 # Fetched
 
-🏗️ in the process of development
+🏗️ on hold for now :(
 
 Postman alternative on the terminal
 
